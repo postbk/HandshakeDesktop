@@ -10,6 +10,7 @@ public partial class MainWindow : System.Windows.Window
 {
     private readonly ObservableCollection<CaptureImage> _selectedImages = [];
     private readonly LocalStore _store = new();
+    private readonly SecureSettings _settings = new();
     private EventRecord _event = null!;
 
     public MainWindow()
@@ -46,6 +47,19 @@ public partial class MainWindow : System.Windows.Window
         StatusText.Text = $"Saved {_selectedImages.Count} image(s) locally for {_event.Name}.";
     }
 
+    private async void Extract_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (_selectedImages.Count == 0) { StatusText.Text = "Select images before extraction."; return; }
+        try
+        {
+            StatusText.Text = "Uploading images for extraction…";
+            var result = await new OpenAiExtractor(_settings).ExtractAsync(_selectedImages);
+            StatusText.Text = "Extraction completed. Review output in the next review-screen increment.";
+            System.Windows.MessageBox.Show(result, "Extraction response");
+        }
+        catch (Exception error) { StatusText.Text = error.Message; }
+    }
+
     private void Window_Drop(object sender, System.Windows.DragEventArgs e)
     {
         if (!e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop)) return;
@@ -71,5 +85,14 @@ public partial class MainWindow : System.Windows.Window
         System.Windows.MessageBox.Show("Event creation is the next database-backed increment.", "New event");
 
     private void Settings_Click(object sender, System.Windows.RoutedEventArgs e) =>
-        System.Windows.MessageBox.Show("Settings will hold the encrypted OpenAI key and Google account connection.", "Settings");
+        ShowSettings();
+
+    private void ShowSettings()
+    {
+        var dialog = new System.Windows.Window { Title = "Handshake settings", Width = 420, Height = 190, WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner, Owner = this };
+        var key = new System.Windows.Controls.PasswordBox { Margin = new System.Windows.Thickness(16), Password = _settings.HasApiKey ? "••••••••" : "" };
+        var save = new System.Windows.Controls.Button { Content = "Save encrypted key", Padding = new System.Windows.Thickness(12, 7), Margin = new System.Windows.Thickness(16, 0, 16, 16) };
+        save.Click += (_, _) => { if (key.Password != "••••••••" && !string.IsNullOrWhiteSpace(key.Password)) _settings.SaveApiKey(key.Password); dialog.Close(); };
+        var panel = new System.Windows.Controls.StackPanel(); panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "OpenAI API key (stored using Windows DPAPI)", Margin = new System.Windows.Thickness(16, 16, 16, 0) }); panel.Children.Add(key); panel.Children.Add(save); dialog.Content = panel; dialog.ShowDialog();
+    }
 }

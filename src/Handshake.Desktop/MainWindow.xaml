@@ -34,6 +34,7 @@
           <Button Content="Choose local images…" Padding="18,11" Click="ChooseImages_Click" />
           <Button Content="Choose from Google Photos…" Padding="18,11" Margin="0,10,0,0" Click="GooglePhotos_Click" />
           <Button Content="Save capture locally" Padding="18,11" Margin="0,10,0,0" Click="SaveCapture_Click" />
+          <Button Content="Extract contact details" Padding="18,11" Margin="0,10,0,0" Click="Extract_Click" />
           <TextBlock x:Name="StatusText" Text="No images selected yet." Foreground="#60716D" TextWrapping="Wrap" Margin="0,20,0,0" />
         </StackPanel>
       </Border>
