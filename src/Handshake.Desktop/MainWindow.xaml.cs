@@ -1,11 +1,12 @@
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
+using Handshake.Desktop.Models;
 
 namespace Handshake.Desktop;
 
 public partial class MainWindow : System.Windows.Window
 {
-    private readonly ObservableCollection<string> _selectedImages = [];
+    private readonly ObservableCollection<CaptureImage> _selectedImages = [];
 
     public MainWindow()
     {
@@ -22,13 +23,32 @@ public partial class MainWindow : System.Windows.Window
             Multiselect = true
         };
         if (dialog.ShowDialog() != true) return;
-        foreach (var file in dialog.FileNames.Take(4))
-            if (!_selectedImages.Contains(file)) _selectedImages.Add(file);
-        StatusText.Text = $"{_selectedImages.Count} image(s) selected. Review them before extraction.";
+        AddImages(dialog.FileNames);
     }
 
     private void GooglePhotos_Click(object sender, System.Windows.RoutedEventArgs e) =>
         System.Windows.MessageBox.Show("Google Photos Picker will be connected in the next increment. It will use explicit user-selected photos rather than broad library access.", "Google Photos");
+
+    private void Window_Drop(object sender, System.Windows.DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop)) return;
+        AddImages((string[])e.Data.GetData(System.Windows.DataFormats.FileDrop)!);
+    }
+
+    private void AddImages(IEnumerable<string> files)
+    {
+        var imageFiles = files.Where(IsImageFile).Take(Math.Max(0, 4 - _selectedImages.Count));
+        foreach (var file in imageFiles)
+            if (_selectedImages.All(x => !string.Equals(x.Path, file, StringComparison.OrdinalIgnoreCase)))
+                _selectedImages.Add(new CaptureImage(file, Path.GetFileName(file)));
+        StatusText.Text = _selectedImages.Count == 0
+            ? "No images selected yet."
+            : $"{_selectedImages.Count} image(s) selected. Review them before extraction.";
+    }
+
+    private static bool IsImageFile(string file) =>
+        new[] { ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff" }
+            .Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase);
 
     private void NewEvent_Click(object sender, System.Windows.RoutedEventArgs e) =>
         System.Windows.MessageBox.Show("Event creation is the next database-backed increment.", "New event");
