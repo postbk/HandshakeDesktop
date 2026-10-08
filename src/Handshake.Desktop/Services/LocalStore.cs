@@ -61,6 +61,16 @@ public sealed class LocalStore
         command.Parameters.AddWithValue("$created", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()); command.ExecuteNonQuery();
     }
 
+    public List<ContactRecord> GetContacts(string eventId)
+    {
+        using var connection = Open(); using var command = connection.CreateCommand();
+        command.CommandText = "SELECT id, event_id, name, company, title, email, phone, website, address, raw_extraction FROM contacts WHERE event_id = $event ORDER BY created_at DESC";
+        command.Parameters.AddWithValue("$event", eventId);
+        using var rows = command.ExecuteReader(); var contacts = new List<ContactRecord>();
+        while (rows.Read()) contacts.Add(new ContactRecord(rows.GetString(0), rows.GetString(1), rows.GetString(2), rows.GetString(3), rows.GetString(4), rows.GetString(5), rows.GetString(6), rows.GetString(7), rows.GetString(8), rows.GetString(9)));
+        return contacts;
+    }
+
     private SqliteConnection Open()
     {
         var connection = new SqliteConnection(_connectionString);

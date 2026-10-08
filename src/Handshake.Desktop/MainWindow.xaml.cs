@@ -18,6 +18,7 @@ public partial class MainWindow : System.Windows.Window
         InitializeComponent();
         ImagesList.ItemsSource = _selectedImages;
         _event = _store.GetOrCreateDefaultEvent();
+        RefreshContacts();
         StatusText.Text = $"Ready for {_event.Name}. Select images or drag them into this window.";
     }
 
@@ -55,10 +56,16 @@ public partial class MainWindow : System.Windows.Window
             StatusText.Text = "Uploading images for extraction…";
             var result = await new OpenAiExtractor(_settings).ExtractAsync(_selectedImages);
             var review = new ReviewWindow(_event, _store, result) { Owner = this };
-            if (review.ShowDialog() == true) StatusText.Text = "Contact reviewed and saved locally.";
+            if (review.ShowDialog() == true) { RefreshContacts(); StatusText.Text = "Contact reviewed and saved locally."; }
             else StatusText.Text = "Extraction completed; review was left open or cancelled.";
         }
         catch (Exception error) { StatusText.Text = error.Message; }
+    }
+
+    private void RefreshContacts()
+    {
+        ContactsList.ItemsSource = _store.GetContacts(_event.Id).Select(c =>
+            string.IsNullOrWhiteSpace(c.Company) ? c.Name : $"{c.Name} — {c.Company}").ToList();
     }
 
     private void Window_Drop(object sender, System.Windows.DragEventArgs e)

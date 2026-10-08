@@ -42,7 +42,9 @@
         <StackPanel>
           <TextBlock Text="Selected pages" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource ForestTeal}" />
           <TextBlock Text="Images will be normalized and reviewed here before AI extraction is added." Foreground="#60716D" TextWrapping="Wrap" Margin="0,8,0,18" />
-          <ListBox x:Name="ImagesList" MinHeight="180" />
+          <ListBox x:Name="ImagesList" MinHeight="120" />
+          <TextBlock Text="Saved contacts" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource ForestTeal}" Margin="0,20,0,8" />
+          <ListBox x:Name="ContactsList" MinHeight="120" />
         </StackPanel>
       </Border>
     </Grid>
