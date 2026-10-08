@@ -9,6 +9,6 @@
     <TextBlock Text="Website" /><TextBox x:Name="WebsiteBox" Margin="0,4,0,10" />
     <TextBlock Text="Address" /><TextBox x:Name="AddressBox" Margin="0,4,0,14" />
     <TextBlock Text="Raw AI response" FontWeight="SemiBold" /><TextBox x:Name="RawBox" Height="130" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Margin="0,4,0,14" />
-    <Button Content="Save contact" Padding="14,9" HorizontalAlignment="Right" Click="Save_Click" />
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"><Button Content="Research company" Padding="14,9" Margin="0,0,10,0" Click="Research_Click" /><Button Content="Save contact" Padding="14,9" Click="Save_Click" /></StackPanel>
   </StackPanel></ScrollViewer>
 </Window>

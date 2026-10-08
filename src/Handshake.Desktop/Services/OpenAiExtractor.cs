@@ -41,4 +41,19 @@ public sealed class OpenAiExtractor
                     if (part.TryGetProperty("text", out var text)) return text.GetString() ?? body;
         return body;
     }
+
+    public async Task<string> ResearchAsync(string company, string website, CancellationToken cancellationToken = default)
+    {
+        var key = _settings.GetApiKey();
+        if (string.IsNullOrWhiteSpace(key)) throw new InvalidOperationException("Add an OpenAI API key in Settings first.");
+        var request = new { model = "gpt-4.1", store = false, tools = new[] { new { type = "web_search_preview" } }, input = $"Research this exact company for a trade-show follow-up. Company: {company}. Website: {website}. Summarize what it does, products/services, markets, and useful follow-up questions. Cite sources inline and distinguish company claims from independently verified information." };
+        using var message = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/responses");
+        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
+        message.Content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
+        using var response = await _http.SendAsync(message, cancellationToken); var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (!response.IsSuccessStatusCode) throw new InvalidOperationException($"Research request failed ({(int)response.StatusCode}).");
+        using var json = JsonDocument.Parse(body); if (!json.RootElement.TryGetProperty("output", out var output)) return body;
+        foreach (var item in output.EnumerateArray()) if (item.TryGetProperty("content", out var parts)) foreach (var part in parts.EnumerateArray()) if (part.TryGetProperty("text", out var text)) return text.GetString() ?? body;
+        return body;
+    }
 }

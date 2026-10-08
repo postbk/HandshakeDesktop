@@ -25,4 +25,11 @@ public partial class ReviewWindow : System.Windows.Window
         _store.SaveContact(new ContactRecord(Guid.NewGuid().ToString(), _event.Id, NameBox.Text.Trim(), CompanyBox.Text.Trim(), TitleBox.Text.Trim(), EmailBox.Text.Trim(), PhoneBox.Text.Trim(), WebsiteBox.Text.Trim(), AddressBox.Text.Trim(), RawBox.Text));
         DialogResult = true;
     }
+
+    private async void Research_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(CompanyBox.Text)) { System.Windows.MessageBox.Show("Enter a company first."); return; }
+        try { var result = await new OpenAiExtractor(new SecureSettings()).ResearchAsync(CompanyBox.Text, WebsiteBox.Text); new ResearchWindow(result) { Owner = this }.ShowDialog(); }
+        catch (Exception error) { System.Windows.MessageBox.Show(error.Message, "Research failed"); }
+    }
 }
