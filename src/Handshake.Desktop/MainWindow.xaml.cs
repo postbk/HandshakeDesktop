@@ -41,7 +41,7 @@ public partial class MainWindow : System.Windows.Window
     }
 
     private void GooglePhotos_Click(object sender, System.Windows.RoutedEventArgs e) =>
-        System.Windows.MessageBox.Show("Google Photos Picker will be connected in the next increment. It will use explicit user-selected photos rather than broad library access.", "Google Photos");
+        System.Windows.MessageBox.Show("Google Photos Picker requires a Google Cloud OAuth desktop client ID. See GOOGLE_PHOTOS_SETUP.md. Local files and drag-and-drop are available now.", "Google Photos");
 
     private void SaveCapture_Click(object sender, System.Windows.RoutedEventArgs e)
     {
