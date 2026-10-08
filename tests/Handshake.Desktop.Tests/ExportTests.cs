@@ -1,5 +1,6 @@
 using Handshake.Desktop.Models;
 using Handshake.Desktop.Services;
+using Xunit;
 
 namespace Handshake.Desktop.Tests;
 
