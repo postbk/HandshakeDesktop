@@ -1,0 +1,10 @@
+<Application x:Class="Handshake.Desktop.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+  <Application.Resources>
+    <SolidColorBrush x:Key="ForestTeal" Color="#175C59" />
+    <SolidColorBrush x:Key="Mint" Color="#D9F0E6" />
+    <SolidColorBrush x:Key="Ivory" Color="#FFFDF7" />
+  </Application.Resources>
+</Application>
