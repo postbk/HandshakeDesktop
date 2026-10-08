@@ -79,6 +79,25 @@ public sealed class LocalStore
         foreach (var c in rows) writer.WriteLine(string.Join(",", new[] { c.Name, c.Company, c.Title, c.Email, c.Phone, c.Website, c.Address }.Select(CsvCell)));
     }
 
+    public void ExportVcf(string eventId, string path)
+    {
+        using var writer = new StreamWriter(path, false, new System.Text.UTF8Encoding(false));
+        foreach (var c in GetContacts(eventId))
+        {
+            writer.WriteLine("BEGIN:VCARD\nVERSION:3.0");
+            writer.WriteLine($"FN:{VCard(c.Name)}");
+            if (!string.IsNullOrWhiteSpace(c.Company)) writer.WriteLine($"ORG:{VCard(c.Company)}");
+            if (!string.IsNullOrWhiteSpace(c.Title)) writer.WriteLine($"TITLE:{VCard(c.Title)}");
+            if (!string.IsNullOrWhiteSpace(c.Email)) writer.WriteLine($"EMAIL:{VCard(c.Email)}");
+            if (!string.IsNullOrWhiteSpace(c.Phone)) writer.WriteLine($"TEL:{VCard(c.Phone)}");
+            if (!string.IsNullOrWhiteSpace(c.Website)) writer.WriteLine($"URL:{VCard(c.Website)}");
+            if (!string.IsNullOrWhiteSpace(c.Address)) writer.WriteLine($"ADR:;;{VCard(c.Address)}");
+            writer.WriteLine("END:VCARD");
+        }
+    }
+
+    private static string VCard(string value) => value.Replace("\\", "\\\\").Replace(";", "\\;").Replace(",", "\\,").Replace("\r", "").Replace("\n", "\\n");
+
     private static string CsvCell(string value) => $"\"{value.Replace("\"", "\"\"")}\"";
 
     private SqliteConnection Open()

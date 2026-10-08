@@ -56,6 +56,14 @@ public partial class MainWindow : System.Windows.Window
         StatusText.Text = "Contacts exported to CSV.";
     }
 
+    private void ExportVcf_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        var dialog = new SaveFileDialog { Title = "Export Handshake contacts", Filter = "vCard files|*.vcf", FileName = "handshake-contacts.vcf" };
+        if (dialog.ShowDialog() != true) return;
+        _store.ExportVcf(_event.Id, dialog.FileName);
+        StatusText.Text = "Contacts exported to vCard.";
+    }
+
     private async void Extract_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         if (_selectedImages.Count == 0) { StatusText.Text = "Select images before extraction."; return; }
