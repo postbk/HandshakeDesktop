@@ -2,17 +2,22 @@ using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.IO;
 using Handshake.Desktop.Models;
+using Handshake.Desktop.Services;
 
 namespace Handshake.Desktop;
 
 public partial class MainWindow : System.Windows.Window
 {
     private readonly ObservableCollection<CaptureImage> _selectedImages = [];
+    private readonly LocalStore _store = new();
+    private EventRecord _event = null!;
 
     public MainWindow()
     {
         InitializeComponent();
         ImagesList.ItemsSource = _selectedImages;
+        _event = _store.GetOrCreateDefaultEvent();
+        StatusText.Text = $"Ready for {_event.Name}. Select images or drag them into this window.";
     }
 
     private void ChooseImages_Click(object sender, System.Windows.RoutedEventArgs e)
@@ -29,6 +34,17 @@ public partial class MainWindow : System.Windows.Window
 
     private void GooglePhotos_Click(object sender, System.Windows.RoutedEventArgs e) =>
         System.Windows.MessageBox.Show("Google Photos Picker will be connected in the next increment. It will use explicit user-selected photos rather than broad library access.", "Google Photos");
+
+    private void SaveCapture_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (_selectedImages.Count == 0)
+        {
+            StatusText.Text = "Select at least one image before saving a capture.";
+            return;
+        }
+        _store.SaveCapture(_event, _selectedImages);
+        StatusText.Text = $"Saved {_selectedImages.Count} image(s) locally for {_event.Name}.";
+    }
 
     private void Window_Drop(object sender, System.Windows.DragEventArgs e)
     {
