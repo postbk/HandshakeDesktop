@@ -51,7 +51,7 @@
           <ListBox x:Name="ImagesList" MinHeight="120" />
           <TextBlock Text="Saved contacts" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource ForestTeal}" Margin="0,20,0,8" />
           <TextBox x:Name="SearchBox" TextChanged="SearchBox_TextChanged" ToolTip="Search saved contacts" Margin="0,0,0,8" Padding="8" />
-          <ListBox x:Name="ContactsList" MinHeight="120" />
+          <ListBox x:Name="ContactsList" MinHeight="120" DisplayMemberPath="Name" MouseDoubleClick="ContactsList_DoubleClick" />
         </StackPanel>
       </Border>
     </Grid>
