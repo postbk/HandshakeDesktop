@@ -127,6 +127,13 @@ public partial class MainWindow : System.Windows.Window
         if (ContactsList.SelectedItem is ContactRecord contact) { var review = new ReviewWindow(_event, _store, contact.RawExtraction, contact) { Owner = this }; if (review.ShowDialog() == true) RefreshContacts(); }
     }
 
+    private void DeleteContact_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (ContactsList.SelectedItem is not ContactRecord contact) return;
+        if (System.Windows.MessageBox.Show($"Delete {contact.Name}?", "Confirm deletion", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning) != System.Windows.MessageBoxResult.Yes) return;
+        _store.DeleteContact(contact.Id); RefreshContacts(); StatusText.Text = "Contact deleted.";
+    }
+
     private void Window_Drop(object sender, System.Windows.DragEventArgs e)
     {
         if (!e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop)) return;

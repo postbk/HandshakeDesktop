@@ -85,6 +85,11 @@ public sealed class LocalStore
         return contacts;
     }
 
+    public void DeleteContact(string id)
+    {
+        using var connection = Open(); using var command = connection.CreateCommand(); command.CommandText = "DELETE FROM contacts WHERE id = $id"; command.Parameters.AddWithValue("$id", id); command.ExecuteNonQuery();
+    }
+
     public void ExportCsv(string eventId, string path)
     {
         var rows = GetContacts(eventId);
