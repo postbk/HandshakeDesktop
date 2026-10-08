@@ -38,6 +38,7 @@
           <Button Content="Export contacts to CSV…" Padding="18,11" Margin="0,10,0,0" Click="Export_Click" />
           <Button Content="Export contacts to vCard…" Padding="18,11" Margin="0,10,0,0" Click="ExportVcf_Click" />
           <Button x:Name="MemoButton" Content="Record voice memo (59 sec max)" Padding="18,11" Margin="0,10,0,0" Click="Memo_Click" />
+          <Button Content="Import audio memo…" Padding="18,11" Margin="0,10,0,0" Click="ImportAudio_Click" />
           <Button Content="Transcribe latest memo" Padding="18,11" Margin="0,10,0,0" Click="Transcribe_Click" />
           <TextBlock x:Name="StatusText" Text="No images selected yet." Foreground="#60716D" TextWrapping="Wrap" Margin="0,20,0,0" />
         </StackPanel>

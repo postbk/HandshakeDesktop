@@ -92,6 +92,13 @@ public partial class MainWindow : System.Windows.Window
         catch (Exception error) { StatusText.Text = error.Message; }
     }
 
+    private void ImportAudio_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog { Title = "Import voice memo", Filter = "Audio files|*.wav;*.mp3;*.m4a;*.aac;*.flac|All files|*.*" };
+        if (dialog.ShowDialog() != true) return;
+        try { _audio.LoadExisting(dialog.FileName); StatusText.Text = $"Imported audio memo: {Path.GetFileName(dialog.FileName)}"; } catch (Exception error) { StatusText.Text = error.Message; }
+    }
+
     private async void Extract_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         if (_selectedImages.Count == 0) { StatusText.Text = "Select images before extraction."; return; }

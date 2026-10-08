@@ -10,6 +10,7 @@ public sealed class AudioMemoService : IDisposable
     private readonly string _folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Handshake", "memos");
     public bool IsRecording => _input is not null;
     public string? CurrentPath { get; private set; }
+    public void LoadExisting(string path) { if (!File.Exists(path)) throw new FileNotFoundException("Audio file not found.", path); CurrentPath = path; }
 
     public void Start()
     {
