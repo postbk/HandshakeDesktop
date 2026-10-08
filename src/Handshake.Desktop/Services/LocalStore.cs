@@ -1,5 +1,6 @@
 using Handshake.Desktop.Models;
 using Microsoft.Data.Sqlite;
+using System.IO;
 
 namespace Handshake.Desktop.Services;
 
