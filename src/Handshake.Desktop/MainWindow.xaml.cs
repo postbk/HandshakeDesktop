@@ -85,6 +85,13 @@ public partial class MainWindow : System.Windows.Window
         catch (Exception error) { StatusText.Text = $"Microphone unavailable: {error.Message}"; }
     }
 
+    private async void Transcribe_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(_audio.CurrentPath) || !File.Exists(_audio.CurrentPath)) { StatusText.Text = "Record a voice memo first."; return; }
+        try { StatusText.Text = "Transcribing memo…"; var text = await new OpenAiExtractor(_settings).TranscribeAsync(_audio.CurrentPath); var box = new System.Windows.Controls.TextBox { Text = text, AcceptsReturn = true, TextWrapping = System.Windows.TextWrapping.Wrap, Width = 640, Height = 260, Margin = new System.Windows.Thickness(18) }; var dialog = new System.Windows.Window { Title = "Review transcript", Content = box, Width = 700, Height = 380, Owner = this, WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner }; dialog.ShowDialog(); StatusText.Text = "Transcript ready for review."; }
+        catch (Exception error) { StatusText.Text = error.Message; }
+    }
+
     private async void Extract_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         if (_selectedImages.Count == 0) { StatusText.Text = "Select images before extraction."; return; }

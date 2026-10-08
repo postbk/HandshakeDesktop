@@ -56,4 +56,14 @@ public sealed class OpenAiExtractor
         foreach (var item in output.EnumerateArray()) if (item.TryGetProperty("content", out var parts)) foreach (var part in parts.EnumerateArray()) if (part.TryGetProperty("text", out var text)) return text.GetString() ?? body;
         return body;
     }
+
+    public async Task<string> TranscribeAsync(string audioPath, CancellationToken cancellationToken = default)
+    {
+        var key = _settings.GetApiKey(); if (string.IsNullOrWhiteSpace(key)) throw new InvalidOperationException("Add an OpenAI API key in Settings first.");
+        using var form = new MultipartFormDataContent(); form.Add(new StringContent("gpt-4o-mini-transcribe"), "model");
+        await using var stream = File.OpenRead(audioPath); var audio = new StreamContent(stream); audio.Headers.ContentType = new MediaTypeHeaderValue("audio/wav"); form.Add(audio, "file", Path.GetFileName(audioPath));
+        using var message = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/audio/transcriptions") { Content = form }; message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
+        using var response = await _http.SendAsync(message, cancellationToken); var body = await response.Content.ReadAsStringAsync(cancellationToken); if (!response.IsSuccessStatusCode) throw new InvalidOperationException($"Transcription failed ({(int)response.StatusCode}).");
+        using var json = JsonDocument.Parse(body); return json.RootElement.TryGetProperty("text", out var text) ? text.GetString() ?? "" : body;
+    }
 }
