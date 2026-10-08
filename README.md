@@ -15,3 +15,7 @@ Open `Handshake.Desktop.sln` in Visual Studio and run the project. Select the **
 - Local files and drag-and-drop
 - Google Photos Picker API using explicit user selection
 - Optional folder/watch-folder import later
+
+## Publish a standalone Windows build
+
+Run `.\publish.ps1` from PowerShell. The self-contained executable is written to `artifacts\win-x64` and does not require the user to install .NET separately.
