@@ -11,6 +11,9 @@ public partial class MainWindow : System.Windows.Window
     private readonly ObservableCollection<CaptureImage> _selectedImages = [];
     private readonly LocalStore _store = new();
     private readonly SecureSettings _settings = new();
+    private readonly AudioMemoService _audio = new();
+    private System.Windows.Threading.DispatcherTimer? _memoTimer;
+    private int _memoSeconds;
     private EventRecord _event = null!;
 
     public MainWindow()
@@ -63,6 +66,23 @@ public partial class MainWindow : System.Windows.Window
         if (dialog.ShowDialog() != true) return;
         _store.ExportVcf(_event.Id, dialog.FileName);
         StatusText.Text = "Contacts exported to vCard.";
+    }
+
+    private void Memo_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        try
+        {
+            if (!_audio.IsRecording)
+            {
+                _audio.Start(); _memoSeconds = 0; MemoButton.Content = "Stop voice memo (0:59)"; StatusText.Text = "Recording private voice memo…";
+                _memoTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) }; _memoTimer.Tick += (_, _) => { _memoSeconds++; MemoButton.Content = $"Stop voice memo (0:{59 - _memoSeconds:00})"; if (_memoSeconds >= 59) Memo_Click(this, new System.Windows.RoutedEventArgs()); }; _memoTimer.Start();
+            }
+            else
+            {
+                var path = _audio.Stop(); _memoTimer?.Stop(); MemoButton.Content = "Record voice memo (59 sec max)"; StatusText.Text = path is null ? "No memo recorded." : $"Saved private voice memo: {Path.GetFileName(path)}";
+            }
+        }
+        catch (Exception error) { StatusText.Text = $"Microphone unavailable: {error.Message}"; }
     }
 
     private async void Extract_Click(object sender, System.Windows.RoutedEventArgs e)
