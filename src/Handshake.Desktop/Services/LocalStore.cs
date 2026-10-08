@@ -84,8 +84,8 @@ public sealed class LocalStore
     {
         var rows = GetContacts(eventId);
         using var writer = new StreamWriter(path, false, new System.Text.UTF8Encoding(true));
-        writer.WriteLine("name,company,title,email,phone,website,address");
-        foreach (var c in rows) writer.WriteLine(string.Join(",", new[] { c.Name, c.Company, c.Title, c.Email, c.Phone, c.Website, c.Address }.Select(CsvCell)));
+        writer.WriteLine("name,company,title,email,phone,website,address,notes,follow_up,follow_up_done");
+        foreach (var c in rows) writer.WriteLine(string.Join(",", new[] { c.Name, c.Company, c.Title, c.Email, c.Phone, c.Website, c.Address, c.Notes, c.FollowUp, c.Done ? "true" : "false" }.Select(CsvCell)));
     }
 
     public void ExportVcf(string eventId, string path)
@@ -101,6 +101,7 @@ public sealed class LocalStore
             if (!string.IsNullOrWhiteSpace(c.Phone)) writer.WriteLine($"TEL:{VCard(c.Phone)}");
             if (!string.IsNullOrWhiteSpace(c.Website)) writer.WriteLine($"URL:{VCard(c.Website)}");
             if (!string.IsNullOrWhiteSpace(c.Address)) writer.WriteLine($"ADR:;;{VCard(c.Address)}");
+            if (!string.IsNullOrWhiteSpace(c.Notes) || !string.IsNullOrWhiteSpace(c.FollowUp)) writer.WriteLine($"NOTE:{VCard(string.Join("\n", new[] { c.Notes, string.IsNullOrWhiteSpace(c.FollowUp) ? "" : $"Follow-up ({(c.Done ? "done" : "open")}): {c.FollowUp}" }.Where(x => !string.IsNullOrWhiteSpace(x))))}");
             writer.WriteLine("END:VCARD");
         }
     }
