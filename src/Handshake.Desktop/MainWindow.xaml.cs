@@ -72,9 +72,13 @@ public partial class MainWindow : System.Windows.Window
 
     private void RefreshContacts()
     {
-        ContactsList.ItemsSource = _store.GetContacts(_event.Id).Select(c =>
+        var query = SearchBox?.Text?.Trim() ?? "";
+        ContactsList.ItemsSource = _store.GetContacts(_event.Id).Where(c => string.IsNullOrWhiteSpace(query) ||
+            string.Join(" ", c.Name, c.Company, c.Title, c.Email, c.Phone, c.Website, c.Address).Contains(query, StringComparison.OrdinalIgnoreCase)).Select(c =>
             string.IsNullOrWhiteSpace(c.Company) ? c.Name : $"{c.Name} — {c.Company}").ToList();
     }
+
+    private void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => RefreshContacts();
 
     private void Window_Drop(object sender, System.Windows.DragEventArgs e)
     {
