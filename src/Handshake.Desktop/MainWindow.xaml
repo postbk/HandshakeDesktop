@@ -19,8 +19,8 @@
     <Border Grid.Row="1" Background="{DynamicResource Mint}" CornerRadius="12" Padding="18" Margin="0,0,0,18">
       <DockPanel>
         <StackPanel>
-          <TextBlock Text="Current event" FontWeight="SemiBold" Foreground="{DynamicResource ForestTeal}" />
-          <TextBlock Text="Choose an event or create one to start capturing connections." Margin="0,5,0,0" />
+          <TextBlock x:Name="EventNameText" Text="Current event" FontWeight="SemiBold" Foreground="{DynamicResource ForestTeal}" />
+          <TextBlock x:Name="EventDetailsText" Text="Choose an event or create one to start capturing connections." Margin="0,5,0,0" />
         </StackPanel>
         <Button DockPanel.Dock="Right" Content="New event" Padding="18,9" Click="NewEvent_Click" />
       </DockPanel>

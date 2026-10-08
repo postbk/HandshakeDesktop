@@ -36,6 +36,14 @@ public sealed class LocalStore
         return created;
     }
 
+    public EventRecord CreateEvent(string name, string location, string dates)
+    {
+        var created = new EventRecord(Guid.NewGuid().ToString(), name.Trim(), location.Trim(), dates.Trim());
+        using var connection = Open(); using var insert = connection.CreateCommand();
+        insert.CommandText = "INSERT INTO events(id, name, location, dates, created_at) VALUES ($id, $name, $location, $dates, $created)";
+        insert.Parameters.AddWithValue("$id", created.Id); insert.Parameters.AddWithValue("$name", created.Name); insert.Parameters.AddWithValue("$location", created.Location); insert.Parameters.AddWithValue("$dates", created.Dates); insert.Parameters.AddWithValue("$created", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()); insert.ExecuteNonQuery(); return created;
+    }
+
     public void SaveCapture(EventRecord eventRecord, IEnumerable<CaptureImage> images)
     {
         using var connection = Open();

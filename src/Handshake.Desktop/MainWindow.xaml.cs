@@ -18,6 +18,7 @@ public partial class MainWindow : System.Windows.Window
         InitializeComponent();
         ImagesList.ItemsSource = _selectedImages;
         _event = _store.GetOrCreateDefaultEvent();
+        UpdateEventHeader();
         RefreshContacts();
         StatusText.Text = $"Ready for {_event.Name}. Select images or drag them into this window.";
     }
@@ -109,8 +110,16 @@ public partial class MainWindow : System.Windows.Window
         new[] { ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff" }
             .Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase);
 
-    private void NewEvent_Click(object sender, System.Windows.RoutedEventArgs e) =>
-        System.Windows.MessageBox.Show("Event creation is the next database-backed increment.", "New event");
+    private void NewEvent_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        var dialog = new System.Windows.Window { Title = "New event", Width = 420, Height = 260, WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner, Owner = this };
+        var name = new System.Windows.Controls.TextBox { Margin = new System.Windows.Thickness(16, 8, 16, 8) }; var location = new System.Windows.Controls.TextBox { Margin = new System.Windows.Thickness(16, 8, 16, 8) }; var dates = new System.Windows.Controls.TextBox { Margin = new System.Windows.Thickness(16, 8, 16, 8) }; var save = new System.Windows.Controls.Button { Content = "Create event", Padding = new System.Windows.Thickness(12, 7, 12, 7), Margin = new System.Windows.Thickness(16) };
+        var panel = new System.Windows.Controls.StackPanel(); panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Event name", Margin = new System.Windows.Thickness(16, 12, 16, 0) }); panel.Children.Add(name); panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Location", Margin = new System.Windows.Thickness(16, 0, 16, 0) }); panel.Children.Add(location); panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Dates", Margin = new System.Windows.Thickness(16, 0, 16, 0) }); panel.Children.Add(dates); panel.Children.Add(save); dialog.Content = panel;
+        save.Click += (_, _) => { if (string.IsNullOrWhiteSpace(name.Text)) return; _event = _store.CreateEvent(name.Text, location.Text, dates.Text); UpdateEventHeader(); RefreshContacts(); dialog.Close(); };
+        dialog.ShowDialog();
+    }
+
+    private void UpdateEventHeader() { EventNameText.Text = _event.Name; EventDetailsText.Text = string.Join(" · ", new[] { _event.Location, _event.Dates }.Where(x => !string.IsNullOrWhiteSpace(x))); }
 
     private void Settings_Click(object sender, System.Windows.RoutedEventArgs e) =>
         ShowSettings();
