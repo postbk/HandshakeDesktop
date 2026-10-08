@@ -54,8 +54,9 @@ public partial class MainWindow : System.Windows.Window
         {
             StatusText.Text = "Uploading images for extraction…";
             var result = await new OpenAiExtractor(_settings).ExtractAsync(_selectedImages);
-            StatusText.Text = "Extraction completed. Review output in the next review-screen increment.";
-            System.Windows.MessageBox.Show(result, "Extraction response");
+            var review = new ReviewWindow(_event, _store, result) { Owner = this };
+            if (review.ShowDialog() == true) StatusText.Text = "Contact reviewed and saved locally.";
+            else StatusText.Text = "Extraction completed; review was left open or cancelled.";
         }
         catch (Exception error) { StatusText.Text = error.Message; }
     }
