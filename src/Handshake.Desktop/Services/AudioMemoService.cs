@@ -1,4 +1,5 @@
 using NAudio.Wave;
+using System.IO;
 
 namespace Handshake.Desktop.Services;
 
