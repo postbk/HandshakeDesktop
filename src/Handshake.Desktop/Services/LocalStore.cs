@@ -71,6 +71,16 @@ public sealed class LocalStore
         return contacts;
     }
 
+    public void ExportCsv(string eventId, string path)
+    {
+        var rows = GetContacts(eventId);
+        using var writer = new StreamWriter(path, false, new System.Text.UTF8Encoding(true));
+        writer.WriteLine("name,company,title,email,phone,website,address");
+        foreach (var c in rows) writer.WriteLine(string.Join(",", new[] { c.Name, c.Company, c.Title, c.Email, c.Phone, c.Website, c.Address }.Select(CsvCell)));
+    }
+
+    private static string CsvCell(string value) => $"\"{value.Replace("\"", "\"\"")}\"";
+
     private SqliteConnection Open()
     {
         var connection = new SqliteConnection(_connectionString);
