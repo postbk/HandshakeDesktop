@@ -12,6 +12,7 @@ public partial class MainWindow : System.Windows.Window
     private readonly LocalStore _store = new();
     private readonly SecureSettings _settings = new();
     private readonly AudioMemoService _audio = new();
+    private readonly ImageNormalizer _normalizer = new();
     private System.Windows.Threading.DispatcherTimer? _memoTimer;
     private int _memoSeconds;
     private EventRecord _event = null!;
@@ -145,7 +146,7 @@ public partial class MainWindow : System.Windows.Window
         var imageFiles = files.Where(IsImageFile).Take(Math.Max(0, 4 - _selectedImages.Count));
         foreach (var file in imageFiles)
             if (_selectedImages.All(x => !string.Equals(x.Path, file, StringComparison.OrdinalIgnoreCase)))
-                _selectedImages.Add(new CaptureImage(file, Path.GetFileName(file)));
+                try { var normalized = _normalizer.Normalize(file); _selectedImages.Add(new CaptureImage(normalized, Path.GetFileName(file))); } catch (Exception error) { StatusText.Text = $"Could not import {Path.GetFileName(file)}: {error.Message}"; }
         StatusText.Text = _selectedImages.Count == 0
             ? "No images selected yet."
             : $"{_selectedImages.Count} image(s) selected. Review them before extraction.";
