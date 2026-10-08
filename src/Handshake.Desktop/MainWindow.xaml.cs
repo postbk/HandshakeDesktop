@@ -1,5 +1,6 @@
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
+using System.IO;
 using Handshake.Desktop.Models;
 
 namespace Handshake.Desktop;
