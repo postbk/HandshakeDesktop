@@ -67,7 +67,7 @@ public partial class ReviewWindow : System.Windows.Window
     {
         var browser = new LinkedInBrowserWindow(NameBox.Text.Trim(), CompanyBox.Text.Trim()) { Owner = this };
         if (browser.ShowDialog() != true || browser.Result is null) return;
-        if (browser.Result.Url.Contains("linkedin.com/in/", StringComparison.OrdinalIgnoreCase)) LinkedInBox.Text = browser.Result.Url;
+        if (!string.IsNullOrWhiteSpace(browser.Result.Url) && browser.Result.Url.Contains("linkedin.com/in/", StringComparison.OrdinalIgnoreCase)) LinkedInBox.Text = browser.Result.Url;
         if (!string.IsNullOrWhiteSpace(browser.Result.ImageUrl))
         {
             try { _photoPath = await ImportBrowserPhotoAsync(browser.Result.ImageUrl, NameBox.Text); UpdatePhotoPreview(); } catch { }
