@@ -42,7 +42,7 @@ public partial class ReviewWindow : System.Windows.Window
         try
         {
             ResearchBusyIndicator.Visibility = System.Windows.Visibility.Visible;
-            var result = await new OpenAiExtractor(new SecureSettings()).ResearchAsync(CompanyBox.Text, WebsiteBox.Text, _images);
+            var result = await new OpenAiExtractor(new SecureSettings()).ResearchAsync(CompanyBox.Text, WebsiteBox.Text, _images, NameBox.Text);
             using var json = System.Text.Json.JsonDocument.Parse(result); var root = json.RootElement;
             ResearchBox.Text = root.GetProperty("summary").GetString() ?? result;
             FillIfBlank(CompanyBox, root, "company"); FillIfBlank(WebsiteBox, root, "website"); FillIfBlank(AddressBox, root, "address"); FillIfBlank(PhoneBox, root, "phone"); FillIfBlank(EmailBox, root, "email");
