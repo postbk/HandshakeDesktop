@@ -40,7 +40,6 @@ public partial class ReviewWindow : System.Windows.Window
             using var json = System.Text.Json.JsonDocument.Parse(result); var root = json.RootElement;
             ResearchBox.Text = root.GetProperty("summary").GetString() ?? result;
             FillIfBlank(CompanyBox, root, "company"); FillIfBlank(WebsiteBox, root, "website"); FillIfBlank(AddressBox, root, "address"); FillIfBlank(PhoneBox, root, "phone"); FillIfBlank(EmailBox, root, "email");
-            new ResearchWindow(ResearchBox.Text) { Owner = this }.ShowDialog();
         }
         catch (Exception error) { System.Windows.MessageBox.Show(error.Message, "Research failed"); }
     }
