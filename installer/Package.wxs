@@ -1,0 +1,16 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="Handshake" Manufacturer="Handshake" Version="1.0.0.0" UpgradeCode="7E5B8B58-7A9D-4E0F-9E7D-DF3D1A4A1F01">
+    <SummaryInformation Description="Handshake personal networking contact manager" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Handshake is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+    <Icon Id="HandshakeIcon" SourceFile="installer\handshake.ico" />
+    <Property Id="ARPPRODUCTICON" Value="HandshakeIcon" />
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="Handshake">
+        <Component Id="Application" Guid="*">
+          <File Id="HandshakeExe" Source="C:\Users\bp6\Documents\Codex\2026-10-08\can\work\HandshakeDesktop\artifacts\win-x64\Handshake.Desktop.exe" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+  </Package>
+</Wix>
