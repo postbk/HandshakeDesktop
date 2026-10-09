@@ -174,7 +174,7 @@ public sealed class LocalStore
             if (!string.IsNullOrWhiteSpace(c.Company)) writer.WriteLine($"ORG:{VCard(c.Company)}");
             if (!string.IsNullOrWhiteSpace(c.Title)) writer.WriteLine($"TITLE:{VCard(c.Title)}");
             if (!string.IsNullOrWhiteSpace(c.Email)) writer.WriteLine($"EMAIL:{VCard(c.Email)}");
-            if (!string.IsNullOrWhiteSpace(c.Phone)) writer.WriteLine($"TEL:{VCard(c.Phone)}");
+            foreach (var phone in PhoneValues(c.Phone)) writer.WriteLine($"TEL;TYPE={phone.Type},VOICE:{VCard(phone.Number)}");
             if (!string.IsNullOrWhiteSpace(c.Website)) writer.WriteLine($"URL:{VCard(c.Website)}");
             if (!string.IsNullOrWhiteSpace(c.LinkedInUrl)) { writer.WriteLine($"URL;TYPE=linkedin:{VCard(c.LinkedInUrl)}"); writer.WriteLine($"X-SOCIALPROFILE;TYPE=linkedin:{VCard(c.LinkedInUrl)}"); }
             if (!string.IsNullOrWhiteSpace(c.Address)) writer.WriteLine($"ADR:;;{VCard(c.Address)}");
@@ -200,6 +200,17 @@ public sealed class LocalStore
     private static void AddHyperlink(IXLCell cell, string url) { if (Uri.TryCreate(url, UriKind.Absolute, out var uri)) { cell.SetHyperlink(new XLHyperlink(uri)); cell.Style.Font.FontColor = XLColor.Blue; cell.Style.Font.Underline = XLFontUnderlineValues.Single; } }
     private static void AddPicture(IXLWorksheet sheet, string path, int row, int column) { if (!File.Exists(path)) return; try { sheet.AddPicture(path).MoveTo(sheet.Cell(row, column)).WithSize(120, 90); sheet.Row(row).Height = 72; } catch { } }
     private static string VCard(string value) => value.Replace("â€¢ ", "- ").Replace("• ", "- ").Replace("\\", "\\\\").Replace(";", "\\;").Replace(",", "\\,").Replace("\r", "").Replace("\n", "\\n");
+    private static IEnumerable<(string Type, string Number)> PhoneValues(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) yield break;
+        var matches = System.Text.RegularExpressions.Regex.Matches(value, @"(?:^|\s)(?<label>P|C|M|F|H|W)\s*[:\-]?\s*(?<number>\+?\d[\d\s().\-]{6,}\d)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (matches.Count == 0) { yield return ("WORK", value.Trim()); yield break; }
+        foreach (System.Text.RegularExpressions.Match match in matches)
+        {
+            var type = match.Groups["label"].Value.ToUpperInvariant() switch { "M" or "C" => "CELL", "H" => "HOME", "F" => "FAX", _ => "WORK" };
+            yield return (type, match.Groups["number"].Value.Trim());
+        }
+    }
 
     private static string CsvCell(string value) => $"\"{value.Replace("\"", "\"\"")}\"";
 
