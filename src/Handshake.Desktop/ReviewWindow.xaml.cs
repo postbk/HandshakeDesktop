@@ -61,7 +61,13 @@ public partial class ReviewWindow : System.Windows.Window
     }
 
     private void DeletePhoto_Click(object sender, System.Windows.RoutedEventArgs e) { if (File.Exists(_cardImagePath)) { try { _photoPath = new ImageNormalizer().CreateTightCrop(_cardImagePath, Path.Combine(_store.GetEventFolder(_event.Id), "contact-photos")); } catch { _photoPath = _cardImagePath; } } else _photoPath = ""; UpdatePhotoPreview(); }
-    private void UpdatePhotoPreview() { if (File.Exists(_photoPath)) { var image = new System.Windows.Media.Imaging.BitmapImage(); image.BeginInit(); image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad; image.UriSource = new Uri(_photoPath); image.EndInit(); image.Freeze(); PhotoPreview.Source = image; } }
+    private void UpdatePhotoPreview()
+    {
+        PhotoPreview.Source = null;
+        if (!File.Exists(_photoPath)) return;
+        try { var image = new System.Windows.Media.Imaging.BitmapImage(); image.BeginInit(); image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad; image.UriSource = new Uri(_photoPath); image.EndInit(); image.Freeze(); PhotoPreview.Source = image; }
+        catch { _photoPath = File.Exists(_cardImagePath) ? _cardImagePath : ""; if (!string.IsNullOrWhiteSpace(_photoPath)) { try { var fallback = new System.Windows.Media.Imaging.BitmapImage(); fallback.BeginInit(); fallback.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad; fallback.UriSource = new Uri(_photoPath); fallback.EndInit(); fallback.Freeze(); PhotoPreview.Source = fallback; } catch { PhotoPreview.Source = null; } } }
+    }
 
     private void RecordMemo_Click(object sender, System.Windows.RoutedEventArgs e)
     {
