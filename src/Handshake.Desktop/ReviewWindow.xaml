@@ -7,7 +7,7 @@
     <TextBlock Text="Email" /><TextBox x:Name="EmailBox" Margin="0,4,0,10" />
     <TextBlock Text="Phone" /><TextBox x:Name="PhoneBox" Margin="0,4,0,10" />
     <TextBlock Text="Website" /><TextBox x:Name="WebsiteBox" Margin="0,4,0,10" />
-    <TextBlock Text="LinkedIn" /><TextBox x:Name="LinkedInBox" Margin="0,4,0,10" />
+    <TextBlock Text="LinkedIn" /><StackPanel Orientation="Horizontal" Margin="0,4,0,10"><TextBox x:Name="LinkedInBox" Width="460" /><Button Content="Open LinkedIn" Padding="10,4" Margin="8,0,0,0" Click="OpenLinkedIn_Click" /></StackPanel>
     <TextBlock Text="Address" /><TextBox x:Name="AddressBox" Margin="0,4,0,14" />
     <TextBlock Text="Contact photo" FontWeight="SemiBold" />
     <StackPanel Orientation="Horizontal" Margin="0,4,0,14"><Image x:Name="PhotoPreview" Width="90" Height="90" Stretch="UniformToFill" Margin="0,0,12,0" /><StackPanel VerticalAlignment="Center"><Button Content="Replace photo" Padding="12,7" Click="ReplacePhoto_Click" /><Button Content="Delete photo" Padding="12,7" Margin="0,7,0,0" Click="DeletePhoto_Click" /></StackPanel></StackPanel>

@@ -61,6 +61,7 @@ public partial class ReviewWindow : System.Windows.Window
     }
 
     private void DeletePhoto_Click(object sender, System.Windows.RoutedEventArgs e) { if (File.Exists(_cardImagePath)) { try { _photoPath = new ImageNormalizer().CreateTightCrop(_cardImagePath, Path.Combine(_store.GetEventFolder(_event.Id), "contact-photos")); } catch { _photoPath = _cardImagePath; } } else _photoPath = ""; UpdatePhotoPreview(); }
+    private void OpenLinkedIn_Click(object sender, System.Windows.RoutedEventArgs e) { if (Uri.TryCreate(LinkedInBox.Text.Trim(), UriKind.Absolute, out var uri)) System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true }); }
     private void UpdatePhotoPreview()
     {
         PhotoPreview.Source = null;
