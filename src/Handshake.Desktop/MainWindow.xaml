@@ -51,8 +51,11 @@
           <Button Content="Delete selected image" Padding="12,8" Margin="0,8,0,0" Click="DeleteImage_Click" />
           <TextBlock Text="Saved contacts" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource ForestTeal}" Margin="0,20,0,8" />
           <TextBox x:Name="SearchBox" TextChanged="SearchBox_TextChanged" ToolTip="Search saved contacts" Margin="0,0,0,8" Padding="8" />
-          <ListBox x:Name="ContactsList" MinHeight="120" MouseDoubleClick="ContactsList_DoubleClick"><ListBox.ItemTemplate><DataTemplate><DockPanel Margin="0,3"><Button DockPanel.Dock="Right" Content="Edit" Padding="10,4" Click="EditContact_Click" /><TextBlock Text="{Binding Name}" VerticalAlignment="Center" /></DockPanel></DataTemplate></ListBox.ItemTemplate></ListBox>
-          <Button Content="Delete selected contact" Padding="12,8" Margin="0,8,0,0" Click="DeleteContact_Click" />
+          <ListBox x:Name="ContactsList" MinHeight="120" DisplayMemberPath="Name" MouseDoubleClick="ContactsList_DoubleClick" />
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+            <Button Content="Edit selected contact" Padding="12,8" Click="EditSelectedContact_Click" />
+            <Button Content="🗑" FontSize="16" Width="34" Height="32" Padding="0" Margin="8,0,0,0" ToolTip="Delete selected contact" Click="DeleteContact_Click" />
+          </StackPanel>
         </StackPanel>
       </Border>
     </Grid>
