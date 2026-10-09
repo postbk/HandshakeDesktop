@@ -34,9 +34,19 @@ public partial class ReviewWindow : System.Windows.Window
     private async void Research_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         if (string.IsNullOrWhiteSpace(CompanyBox.Text)) { System.Windows.MessageBox.Show("Enter a company first."); return; }
-        try { var result = await new OpenAiExtractor(new SecureSettings()).ResearchAsync(CompanyBox.Text, WebsiteBox.Text, _images); ResearchBox.Text = result; new ResearchWindow(result) { Owner = this }.ShowDialog(); }
+        try
+        {
+            var result = await new OpenAiExtractor(new SecureSettings()).ResearchAsync(CompanyBox.Text, WebsiteBox.Text, _images);
+            using var json = System.Text.Json.JsonDocument.Parse(result); var root = json.RootElement;
+            ResearchBox.Text = root.GetProperty("summary").GetString() ?? result;
+            FillIfBlank(CompanyBox, root, "company"); FillIfBlank(WebsiteBox, root, "website"); FillIfBlank(AddressBox, root, "address"); FillIfBlank(PhoneBox, root, "phone"); FillIfBlank(EmailBox, root, "email");
+            new ResearchWindow(ResearchBox.Text) { Owner = this }.ShowDialog();
+        }
         catch (Exception error) { System.Windows.MessageBox.Show(error.Message, "Research failed"); }
     }
+
+    private static void FillIfBlank(System.Windows.Controls.TextBox box, System.Text.Json.JsonElement root, string property)
+    { if (string.IsNullOrWhiteSpace(box.Text) && root.TryGetProperty(property, out var value)) box.Text = value.GetString() ?? ""; }
 
     private void RecordMemo_Click(object sender, System.Windows.RoutedEventArgs e)
     {
