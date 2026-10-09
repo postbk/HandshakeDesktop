@@ -36,9 +36,6 @@ public partial class MainWindow : System.Windows.Window
     private void DeleteImage_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         if (ImagesList.SelectedItem is not CaptureImage image) { StatusText.Text = "Select an image to delete."; return; }
-        var eventFolder = Path.GetFullPath(_store.GetEventFolder(_event.Id));
-        var imagePath = Path.GetFullPath(image.Path);
-        if (!imagePath.StartsWith(eventFolder + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) { StatusText.Text = "Only images stored for this event can be deleted."; return; }
         if (System.Windows.MessageBox.Show($"Delete {image.DisplayName}?", "Confirm image deletion", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning) != System.Windows.MessageBoxResult.Yes) return;
         _store.DeleteCaptureImage(_event.Id, image.Path); if (File.Exists(image.Path)) File.Delete(image.Path); _selectedImages.Remove(image); StatusText.Text = $"Deleted {image.DisplayName}.";
     }
