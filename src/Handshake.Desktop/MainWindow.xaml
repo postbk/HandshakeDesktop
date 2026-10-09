@@ -10,9 +10,14 @@
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
     <DockPanel Grid.Row="0" Margin="0,0,0,22">
-      <StackPanel>
-        <TextBlock Text="Handshake" FontSize="32" FontWeight="SemiBold" Foreground="{DynamicResource ForestTeal}" />
-        <TextBlock Text="Build meaningful connections, organized and actionable" FontSize="15" Foreground="{DynamicResource MutedText}" Margin="0,4,0,0" />
+      <StackPanel Orientation="Horizontal">
+        <Border Width="68" Height="68" CornerRadius="14" Background="White" BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1" Padding="6" Margin="0,0,16,0">
+          <Image Source="/Handshake.Desktop;component/Assets/handshake-icon.png" Stretch="Uniform" />
+        </Border>
+        <StackPanel VerticalAlignment="Center">
+          <TextBlock Text="Handshake" FontSize="32" FontWeight="SemiBold" Foreground="{DynamicResource Navy}" />
+          <TextBlock Text="Build meaningful connections, organized and actionable" FontSize="15" Foreground="{DynamicResource MutedText}" Margin="0,4,0,0" />
+        </StackPanel>
       </StackPanel>
       <Menu DockPanel.Dock="Right" VerticalAlignment="Top" FontSize="13" Background="Transparent">
         <MenuItem Header="Settings" Click="Settings_Click" />
