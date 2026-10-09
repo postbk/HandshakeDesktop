@@ -18,14 +18,15 @@ public sealed class OpenAiExtractor
     {
         var key = _settings.GetApiKey();
         if (string.IsNullOrWhiteSpace(key)) throw new InvalidOperationException("Add an OpenAI API key in Settings first.");
-        var content = new List<object> { new { type = "input_text", text = "Extract the person's name, company, title, email, phone, website, address, and printed company claims from these business-card images. Return concise JSON." } };
+        var content = new List<object> { new { type = "input_text", text = "Extract every distinct person/business card visible in these images. Return one contact object per card, even when multiple cards appear in one image. Include name, company, title, email, phone, website, address, and printed company claims. Return concise JSON." } };
         foreach (var image in images)
         {
             var bytes = await File.ReadAllBytesAsync(image.Path, cancellationToken);
             var mime = Path.GetExtension(image.Path).ToLowerInvariant() == ".png" ? "image/png" : "image/jpeg";
             content.Add(new { type = "input_image", image_url = $"data:{mime};base64,{Convert.ToBase64String(bytes)}", detail = "high" });
         }
-        var schema = new { type = "object", additionalProperties = false, properties = new { name = new { type = "string" }, company = new { type = "string" }, title = new { type = "string" }, email = new { type = "string" }, phone = new { type = "string" }, website = new { type = "string" }, address = new { type = "string" }, printed_claims = new { type = "string" } }, required = new[] { "name", "company", "title", "email", "phone", "website", "address", "printed_claims" } };
+        var contactSchema = new { type = "object", additionalProperties = false, properties = new { name = new { type = "string" }, company = new { type = "string" }, title = new { type = "string" }, email = new { type = "string" }, phone = new { type = "string" }, website = new { type = "string" }, address = new { type = "string" }, printed_claims = new { type = "string" } }, required = new[] { "name", "company", "title", "email", "phone", "website", "address", "printed_claims" } };
+        var schema = new { type = "object", additionalProperties = false, properties = new { contacts = new { type = "array", items = contactSchema } }, required = new[] { "contacts" } };
         var request = new { model = "gpt-4.1-mini", store = false, input = new[] { new { role = "user", content } }, text = new { format = new { type = "json_schema", name = "contact_capture", strict = true, schema } } };
         using var message = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/responses");
         message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);

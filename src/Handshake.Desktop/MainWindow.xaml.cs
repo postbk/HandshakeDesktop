@@ -29,8 +29,33 @@ public partial class MainWindow : System.Windows.Window
     private void ExportVcf_Click(object sender, System.Windows.RoutedEventArgs e) { var d = new SaveFileDialog { Title = "Export Handshake contacts", Filter = "vCard files|*.vcf", FileName = "handshake-contacts.vcf" }; if (d.ShowDialog() != true) return; _store.ExportVcf(_event.Id, d.FileName); StatusText.Text = "Contacts exported to vCard."; }
     private async void Extract_Click(object sender, System.Windows.RoutedEventArgs e)
     {
-        if (ImagesList.SelectedItem is not CaptureImage selectedImage) { StatusText.Text = "Select the image to extract before continuing."; return; } try { BusyIndicator.Visibility = System.Windows.Visibility.Visible; StatusText.Text = $"Uploading {selectedImage.DisplayName} for extraction…"; var selected = new[] { selectedImage }; var result = await new OpenAiExtractor(_settings).ExtractAsync(selected); var review = new ReviewWindow(_event, _store, result, images: selected) { Owner = this }; if (review.ShowDialog() == true) { RefreshContacts(); StatusText.Text = "Contact reviewed and saved locally."; } else StatusText.Text = "Extraction completed; review was left open or cancelled."; } catch (Exception error) { StatusText.Text = error.Message; } finally { BusyIndicator.Visibility = System.Windows.Visibility.Collapsed; }
+        if (ImagesList.SelectedItem is not CaptureImage selectedImage) { StatusText.Text = "Select the image to extract before continuing."; return; }
+        try
+        {
+            BusyIndicator.Visibility = System.Windows.Visibility.Visible; StatusText.Text = $"Extracting contacts from {selectedImage.DisplayName}…";
+            var selected = new[] { selectedImage }; var extractor = new OpenAiExtractor(_settings); var result = await extractor.ExtractAsync(selected);
+            using var document = System.Text.Json.JsonDocument.Parse(result); var root = document.RootElement; var contacts = root.TryGetProperty("contacts", out var list) ? list.EnumerateArray().ToList() : new[] { root }.ToList();
+            var saved = 0;
+            foreach (var item in contacts)
+            {
+                var name = JsonValue(item, "name"); var company = JsonValue(item, "company"); var website = JsonValue(item, "website"); var research = "";
+                if (!string.IsNullOrWhiteSpace(company))
+                {
+                    StatusText.Text = $"Researching {company}…";
+                    try { using var researchJson = System.Text.Json.JsonDocument.Parse(await extractor.ResearchAsync(company, website, selected)); var researchRoot = researchJson.RootElement; company = FirstValue(company, researchRoot, "company"); website = FirstValue(website, researchRoot, "website"); var address = JsonValue(item, "address"); var phone = JsonValue(item, "phone"); var email = JsonValue(item, "email"); address = FirstValue(address, researchRoot, "address"); phone = FirstValue(phone, researchRoot, "phone"); email = FirstValue(email, researchRoot, "email"); research = JsonValue(researchRoot, "summary"); SaveContact(item, name, company, website, address, phone, email, research); saved++; continue; } catch { }
+                }
+                SaveContact(item, name, company, website, JsonValue(item, "address"), JsonValue(item, "phone"), JsonValue(item, "email"), research); saved++;
+            }
+            RefreshContacts(); StatusText.Text = $"Added {saved} contact(s) to the list. Use Edit to add details.";
+        }
+        catch (Exception error) { StatusText.Text = error.Message; }
+        finally { BusyIndicator.Visibility = System.Windows.Visibility.Collapsed; }
     }
+
+    private void SaveContact(System.Text.Json.JsonElement item, string name, string company, string website, string address, string phone, string email, string research)
+    { _store.SaveContact(new ContactRecord(Guid.NewGuid().ToString(), _event.Id, name, company, JsonValue(item, "title"), email, phone, website, address, item.GetRawText(), "", "", false, research)); }
+    private static string JsonValue(System.Text.Json.JsonElement item, string property) => item.TryGetProperty(property, out var value) && value.ValueKind == System.Text.Json.JsonValueKind.String ? value.GetString() ?? "" : "";
+    private static string FirstValue(string current, System.Text.Json.JsonElement root, string property) => string.IsNullOrWhiteSpace(current) ? JsonValue(root, property) : current;
     private void RefreshContacts() { var query = SearchBox?.Text?.Trim() ?? ""; ContactsList.ItemsSource = _store.GetContacts(_event.Id).Where(c => string.IsNullOrWhiteSpace(query) || string.Join(" ", c.Name, c.Company, c.Title, c.Email, c.Phone, c.Website, c.Address).Contains(query, StringComparison.OrdinalIgnoreCase)).ToList(); }
     private void LoadEventImages() { _selectedImages.Clear(); foreach (var image in _store.GetCaptureImages(_event.Id)) _selectedImages.Add(image); StatusText.Text = _selectedImages.Count == 0 ? $"No images saved for {_event.Name}." : $"Loaded {_selectedImages.Count} saved image(s) for {_event.Name}."; }
     private async void DeleteImage_Click(object sender, System.Windows.RoutedEventArgs e)
@@ -49,6 +74,7 @@ public partial class MainWindow : System.Windows.Window
     }
     private void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => RefreshContacts();
     private void ContactsList_DoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) { if (ContactsList.SelectedItem is ContactRecord contact) { var review = new ReviewWindow(_event, _store, contact.RawExtraction, contact, _selectedImages.ToList()) { Owner = this }; if (review.ShowDialog() == true) RefreshContacts(); } }
+    private void EditContact_Click(object sender, System.Windows.RoutedEventArgs e) { if (sender is System.Windows.Controls.Button button && button.DataContext is ContactRecord contact) { var review = new ReviewWindow(_event, _store, contact.RawExtraction, contact, _selectedImages.ToList()) { Owner = this }; if (review.ShowDialog() == true) RefreshContacts(); } }
     private void DeleteContact_Click(object sender, System.Windows.RoutedEventArgs e) { if (ContactsList.SelectedItem is not ContactRecord contact) return; if (System.Windows.MessageBox.Show($"Delete {contact.Name}?", "Confirm deletion", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning) != System.Windows.MessageBoxResult.Yes) return; _store.DeleteContact(contact.Id); RefreshContacts(); StatusText.Text = "Contact deleted."; }
     private void Window_Drop(object sender, System.Windows.DragEventArgs e) { if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop)) AddImages((string[])e.Data.GetData(System.Windows.DataFormats.FileDrop)!); }
     private void AddImages(IEnumerable<string> files) { foreach (var file in files.Where(IsImageFile).Take(Math.Max(0, 4 - _selectedImages.Count))) { try { var normalized = _normalizer.Normalize(file, _store.GetEventFolder(_event.Id)); var image = new CaptureImage(normalized, System.IO.Path.GetFileName(file)); _selectedImages.Add(image); _store.SaveCapture(_event, [image]); } catch (Exception error) { StatusText.Text = $"Could not import {System.IO.Path.GetFileName(file)}: {error.Message}"; } } StatusText.Text = _selectedImages.Count == 0 ? "No images selected yet." : $"{_selectedImages.Count} image(s) selected and saved for {_event.Name}."; }
