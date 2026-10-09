@@ -43,11 +43,12 @@ public sealed class OpenAiExtractor
         return body;
     }
 
-    public async Task<string> ResearchAsync(string company, string website, IEnumerable<CaptureImage>? images = null, string person = "", CancellationToken cancellationToken = default)
+    public async Task<string> ResearchAsync(string company, string website, IEnumerable<CaptureImage>? images = null, string person = "", string promptOverride = "", CancellationToken cancellationToken = default)
     {
         var key = _settings.GetApiKey();
         if (string.IsNullOrWhiteSpace(key)) throw new InvalidOperationException("Add an OpenAI API key in Settings first.");
-        var content = new List<object> { new { type = "input_text", text = $"Research this exact company for a trade-show follow-up. Company: {company}. Website hint: {website}. Use the attached business-card image to read logos, printed domains, email domains, and capability claims. Use those clues to disambiguate generic company names. Summarize what the company does, products/services, markets, address, phone, and email. Cite sources inline and distinguish company claims from independently verified information. Do not include a list of follow-up questions." } };
+        var prompt = string.IsNullOrWhiteSpace(promptOverride) ? $"Research this exact company for a trade-show follow-up. Company: {company}. Website hint: {website}. Use the attached business-card image to read logos, printed domains, email domains, and capability claims. Use those clues to disambiguate generic company names. Summarize what the company does, products/services, markets, address, phone, and email. Cite sources inline and distinguish company claims from independently verified information. Do not include a list of follow-up questions." : promptOverride;
+        var content = new List<object> { new { type = "input_text", text = prompt } };
         foreach (var image in images ?? []) { var bytes = await File.ReadAllBytesAsync(image.Path, cancellationToken); content.Add(new { type = "input_image", image_url = $"data:image/jpeg;base64,{Convert.ToBase64String(bytes)}", detail = "high" }); }
         var schema = new { type = "object", additionalProperties = false, properties = new { company = new { type = "string" }, website = new { type = "string" }, address = new { type = "string" }, phone = new { type = "string" }, email = new { type = "string" }, summary = new { type = "string" } }, required = new[] { "company", "website", "address", "phone", "email", "summary" } };
         var request = new { model = "gpt-4.1", store = false, tools = new[] { new { type = "web_search_preview" } }, input = new[] { new { role = "user", content } }, text = new { format = new { type = "json_schema", name = "company_research", strict = true, schema } } };

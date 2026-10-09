@@ -44,7 +44,13 @@ public partial class ReviewWindow : System.Windows.Window
         try
         {
             ResearchBusyIndicator.Visibility = System.Windows.Visibility.Visible;
-            var result = await new OpenAiExtractor(new SecureSettings()).ResearchAsync(CompanyBox.Text, WebsiteBox.Text, _images, NameBox.Text);
+            var prompt = $"Research this exact company for a trade-show follow-up.\n\nContact name: {NameBox.Text}\nCompany as printed: {CompanyBox.Text}\nWebsite: {WebsiteBox.Text}\nEmail: {EmailBox.Text}\nPhone: {PhoneBox.Text}\nAddress: {AddressBox.Text}\nTitle: {TitleBox.Text}\n\nUse the attached business-card image to inspect logos, domains, email domains, printed claims, and other identifying details. Use those clues to disambiguate similarly named companies. Verify and return the company's website, address, phone, email, and a concise summary of what it does. Cite sources inline and do not include follow-up questions.";
+            var promptBox = new System.Windows.Controls.TextBox { Text = prompt, AcceptsReturn = true, TextWrapping = System.Windows.TextWrapping.Wrap, VerticalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Auto, Margin = new System.Windows.Thickness(16), Width = 600, Height = 260 };
+            var run = new System.Windows.Controls.Button { Content = "Research", Padding = new System.Windows.Thickness(12, 7, 12, 7), HorizontalAlignment = System.Windows.HorizontalAlignment.Right, Margin = new System.Windows.Thickness(16, 0, 16, 16) };
+            var promptWindow = new System.Windows.Window { Title = "Review company research prompt", Width = 660, Height = 380, Owner = this, WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner };
+            var promptPanel = new System.Windows.Controls.StackPanel(); promptPanel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Review or edit the research prompt before sending it.", Margin = new System.Windows.Thickness(16, 16, 16, 0) }); promptPanel.Children.Add(promptBox); promptPanel.Children.Add(run); promptWindow.Content = promptPanel;
+            run.Click += (_, _) => promptWindow.DialogResult = true; if (promptWindow.ShowDialog() != true) return;
+            var result = await new OpenAiExtractor(new SecureSettings()).ResearchAsync(CompanyBox.Text, WebsiteBox.Text, _images, NameBox.Text, promptBox.Text);
             using var json = System.Text.Json.JsonDocument.Parse(result); var root = json.RootElement;
             ResearchBox.Text = root.GetProperty("summary").GetString() ?? result;
             FillIfBlank(CompanyBox, root, "company"); FillIfBlank(WebsiteBox, root, "website"); FillIfBlank(AddressBox, root, "address"); FillIfBlank(PhoneBox, root, "phone"); FillIfBlank(EmailBox, root, "email");
