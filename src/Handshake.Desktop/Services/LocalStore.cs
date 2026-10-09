@@ -118,7 +118,7 @@ public sealed class LocalStore
     {
         using var connection = Open();
         using var command = connection.CreateCommand();
-        command.CommandText = "INSERT OR REPLACE INTO contacts(id, event_id, name, company, title, email, phone, website, address, raw_extraction, notes, follow_up, done, research, photo_path, card_image_path, created_at) VALUES ($id, $event, $name, $company, $title, $email, $phone, $website, $address, $raw, $notes, $follow, $done, $research, $photo, $card, $created)";
+        command.CommandText = "INSERT OR REPLACE INTO contacts(id, event_id, name, company, title, email, phone, website, address, raw_extraction, notes, follow_up, done, research, photo_path, card_image_path, linkedin_url, created_at) VALUES ($id, $event, $name, $company, $title, $email, $phone, $website, $address, $raw, $notes, $follow, $done, $research, $photo, $card, $linkedin, $created)";
         command.Parameters.AddWithValue("$id", contact.Id); command.Parameters.AddWithValue("$event", contact.EventId);
         command.Parameters.AddWithValue("$name", contact.Name); command.Parameters.AddWithValue("$company", contact.Company);
         command.Parameters.AddWithValue("$title", contact.Title); command.Parameters.AddWithValue("$email", contact.Email);
@@ -128,16 +128,17 @@ public sealed class LocalStore
         command.Parameters.AddWithValue("$research", contact.Research);
         command.Parameters.AddWithValue("$photo", contact.PhotoPath);
         command.Parameters.AddWithValue("$card", contact.CardImagePath);
+        command.Parameters.AddWithValue("$linkedin", contact.LinkedInUrl);
         command.Parameters.AddWithValue("$created", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()); command.ExecuteNonQuery();
     }
 
     public List<ContactRecord> GetContacts(string eventId)
     {
         using var connection = Open(); using var command = connection.CreateCommand();
-        command.CommandText = "SELECT id, event_id, name, company, title, email, phone, website, address, raw_extraction, notes, follow_up, done, research, photo_path, card_image_path FROM contacts WHERE event_id = $event ORDER BY created_at DESC";
+        command.CommandText = "SELECT id, event_id, name, company, title, email, phone, website, address, raw_extraction, notes, follow_up, done, research, photo_path, card_image_path, linkedin_url FROM contacts WHERE event_id = $event ORDER BY created_at DESC";
         command.Parameters.AddWithValue("$event", eventId);
         using var rows = command.ExecuteReader(); var contacts = new List<ContactRecord>();
-        while (rows.Read()) contacts.Add(new ContactRecord(rows.GetString(0), rows.GetString(1), rows.GetString(2), rows.GetString(3), rows.GetString(4), rows.GetString(5), rows.GetString(6), rows.GetString(7), rows.GetString(8), rows.GetString(9), rows.IsDBNull(10) ? "" : rows.GetString(10), rows.IsDBNull(11) ? "" : rows.GetString(11), !rows.IsDBNull(12) && rows.GetInt64(12) != 0, rows.IsDBNull(13) ? "" : rows.GetString(13), rows.IsDBNull(14) ? "" : rows.GetString(14), rows.IsDBNull(15) ? "" : rows.GetString(15)));
+        while (rows.Read()) contacts.Add(new ContactRecord(rows.GetString(0), rows.GetString(1), rows.GetString(2), rows.GetString(3), rows.GetString(4), rows.GetString(5), rows.GetString(6), rows.GetString(7), rows.GetString(8), rows.GetString(9), rows.IsDBNull(10) ? "" : rows.GetString(10), rows.IsDBNull(11) ? "" : rows.GetString(11), !rows.IsDBNull(12) && rows.GetInt64(12) != 0, rows.IsDBNull(13) ? "" : rows.GetString(13), rows.IsDBNull(14) ? "" : rows.GetString(14), rows.IsDBNull(15) ? "" : rows.GetString(15), rows.IsDBNull(16) ? "" : rows.GetString(16)));
         return contacts;
     }
 
@@ -201,5 +202,6 @@ public sealed class LocalStore
         try { using var migration = connection.CreateCommand(); migration.CommandText = "ALTER TABLE contacts ADD COLUMN research TEXT NOT NULL DEFAULT ''"; migration.ExecuteNonQuery(); } catch (Microsoft.Data.Sqlite.SqliteException) { }
         try { using var migration = connection.CreateCommand(); migration.CommandText = "ALTER TABLE contacts ADD COLUMN photo_path TEXT NOT NULL DEFAULT ''"; migration.ExecuteNonQuery(); } catch (Microsoft.Data.Sqlite.SqliteException) { }
         try { using var migration = connection.CreateCommand(); migration.CommandText = "ALTER TABLE contacts ADD COLUMN card_image_path TEXT NOT NULL DEFAULT ''"; migration.ExecuteNonQuery(); } catch (Microsoft.Data.Sqlite.SqliteException) { }
+        try { using var migration = connection.CreateCommand(); migration.CommandText = "ALTER TABLE contacts ADD COLUMN linkedin_url TEXT NOT NULL DEFAULT ''"; migration.ExecuteNonQuery(); } catch (Microsoft.Data.Sqlite.SqliteException) { }
     }
 }
