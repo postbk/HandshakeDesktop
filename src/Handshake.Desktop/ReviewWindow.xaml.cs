@@ -1,5 +1,6 @@
 using Handshake.Desktop.Models;
 using Handshake.Desktop.Services;
+using System.IO;
 
 namespace Handshake.Desktop;
 
@@ -48,7 +49,7 @@ public partial class ReviewWindow : System.Windows.Window
         try
         {
             if (_audio.IsRecording) _audio.Stop();
-            var transcript = await new OpenAiExtractor(new SecureSettings()).TranscribeAsync(_audio.CurrentPath);
+            var transcript = await new OpenAiExtractor(new SecureSettings()).TranscribeAsync(_audio.CurrentPath!);
             var organized = await new OpenAiExtractor(new SecureSettings()).AnalyzeMemoAsync(transcript, NameBox.Text + " at " + CompanyBox.Text);
             using var json = System.Text.Json.JsonDocument.Parse(organized); var root = json.RootElement;
             var bullets = root.GetProperty("bullets").EnumerateArray().Select(x => "• " + x.GetString()).Where(x => !string.IsNullOrWhiteSpace(x)); var actions = root.GetProperty("follow_ups").EnumerateArray().Select(x => x.GetString()).Where(x => !string.IsNullOrWhiteSpace(x));
