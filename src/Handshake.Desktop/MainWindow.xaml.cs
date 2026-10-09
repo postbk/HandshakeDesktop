@@ -40,6 +40,18 @@ public partial class MainWindow : System.Windows.Window
         AddImages(dialog.FileNames);
     }
 
+    private void PasteImage_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        try
+        {
+            if (!System.Windows.Clipboard.ContainsImage()) { StatusText.Text = "Copy an image first, then click Paste image from clipboard."; return; }
+            var bitmap = System.Windows.Clipboard.GetImage(); if (bitmap is null) return;
+            if (_selectedImages.Count >= 4) { StatusText.Text = "A capture can contain up to four images."; return; }
+            var normalized = _normalizer.Normalize(bitmap); _selectedImages.Add(new CaptureImage(normalized, "Clipboard image")); StatusText.Text = $"{_selectedImages.Count} image(s) selected. Review them before extraction.";
+        }
+        catch (Exception error) { StatusText.Text = $"Could not paste image: {error.Message}"; }
+    }
+
     private void GooglePhotos_Click(object sender, System.Windows.RoutedEventArgs e) =>
         System.Windows.MessageBox.Show("Google Photos Picker requires a Google Cloud OAuth desktop client ID. See GOOGLE_PHOTOS_SETUP.md. Local files and drag-and-drop are available now.", "Google Photos");
 
