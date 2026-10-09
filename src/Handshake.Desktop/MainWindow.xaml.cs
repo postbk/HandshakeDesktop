@@ -33,11 +33,19 @@ public partial class MainWindow : System.Windows.Window
     }
     private void RefreshContacts() { var query = SearchBox?.Text?.Trim() ?? ""; ContactsList.ItemsSource = _store.GetContacts(_event.Id).Where(c => string.IsNullOrWhiteSpace(query) || string.Join(" ", c.Name, c.Company, c.Title, c.Email, c.Phone, c.Website, c.Address).Contains(query, StringComparison.OrdinalIgnoreCase)).ToList(); }
     private void LoadEventImages() { _selectedImages.Clear(); foreach (var image in _store.GetCaptureImages(_event.Id)) _selectedImages.Add(image); StatusText.Text = _selectedImages.Count == 0 ? $"No images saved for {_event.Name}." : $"Loaded {_selectedImages.Count} saved image(s) for {_event.Name}."; }
-    private void DeleteImage_Click(object sender, System.Windows.RoutedEventArgs e)
+    private async void DeleteImage_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         if (ImagesList.SelectedItem is not CaptureImage image) { StatusText.Text = "Select an image to delete."; return; }
         if (System.Windows.MessageBox.Show($"Delete {image.DisplayName}?", "Confirm image deletion", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning) != System.Windows.MessageBoxResult.Yes) return;
-        _store.DeleteCaptureImage(_event.Id, image.Path); if (File.Exists(image.Path)) File.Delete(image.Path); _selectedImages.Remove(image); StatusText.Text = $"Deleted {image.DisplayName}.";
+        _store.DeleteCaptureImage(_event.Id, image.Path);
+        _selectedImages.Remove(image);
+        ImagesList.ItemsSource = null;
+        ImagesList.ItemsSource = _selectedImages;
+        for (var attempt = 0; attempt < 10 && File.Exists(image.Path); attempt++)
+        {
+            try { File.Delete(image.Path); } catch (IOException) { await Task.Delay(100); }
+        }
+        StatusText.Text = File.Exists(image.Path) ? $"Removed {image.DisplayName} from the event, but Windows is still using the file." : $"Deleted {image.DisplayName}.";
     }
     private void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => RefreshContacts();
     private void ContactsList_DoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) { if (ContactsList.SelectedItem is ContactRecord contact) { var review = new ReviewWindow(_event, _store, contact.RawExtraction, contact, _selectedImages.ToList()) { Owner = this }; if (review.ShowDialog() == true) RefreshContacts(); } }
