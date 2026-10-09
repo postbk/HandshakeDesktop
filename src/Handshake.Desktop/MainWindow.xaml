@@ -47,7 +47,7 @@
         <StackPanel>
           <TextBlock Text="Contact Imports" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource ForestTeal}" />
           <TextBlock Text="Images will be normalized and reviewed here before AI extraction is added." Foreground="#60716D" TextWrapping="Wrap" Margin="0,8,0,18" />
-          <ListBox x:Name="ImagesList" MinHeight="120"><ListBox.ItemTemplate><DataTemplate><StackPanel Orientation="Horizontal" Margin="0,4"><Image Source="{Binding Path}" Width="72" Height="52" Stretch="UniformToFill" Margin="0,0,10,0" /><TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" /></StackPanel></DataTemplate></ListBox.ItemTemplate></ListBox>
+          <ListBox x:Name="ImagesList" MinHeight="120" SelectionMode="Single"><ListBox.ItemTemplate><DataTemplate><StackPanel Orientation="Horizontal" Margin="0,4"><Image Source="{Binding Path}" Width="72" Height="52" Stretch="UniformToFill" Margin="0,0,10,0" /><TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" /></StackPanel></DataTemplate></ListBox.ItemTemplate></ListBox>
           <Button Content="Delete selected image" Padding="12,8" Margin="0,8,0,0" Click="DeleteImage_Click" />
           <TextBlock Text="Saved contacts" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource ForestTeal}" Margin="0,20,0,8" />
           <TextBox x:Name="SearchBox" TextChanged="SearchBox_TextChanged" ToolTip="Search saved contacts" Margin="0,0,0,8" Padding="8" />
