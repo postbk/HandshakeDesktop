@@ -54,7 +54,7 @@ public partial class MainWindow : System.Windows.Window
     }
 
     private void SaveContact(System.Text.Json.JsonElement item, string name, string company, string website, string address, string phone, string email, string research, string photoPath, string cardImagePath, string linkedIn)
-    { _store.SaveContact(new ContactRecord(Guid.NewGuid().ToString(), _event.Id, name, company, JsonValue(item, "title"), email, phone, website, address, item.GetRawText(), "", "", false, research, photoPath, cardImagePath, linkedIn)); }
+    { _store.SaveContact(new ContactRecord(Guid.NewGuid().ToString(), _event.Id, name, company, JsonValue(item, "title"), email, phone, website, address, item.GetRawText(), "", "", false, research, photoPath, cardImagePath, linkedIn, "")); }
     private async Task<string> DownloadPhotoAsync(string url, string personName)
     {
         using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) }; using var response = await client.GetAsync(url); response.EnsureSuccessStatusCode(); var bytes = await response.Content.ReadAsByteArrayAsync(); if (bytes.Length == 0 || bytes.Length > 10_000_000) throw new InvalidOperationException("Headshot was not a usable image."); var folder = Path.Combine(_store.GetEventFolder(_event.Id), "contact-photos"); Directory.CreateDirectory(folder); var path = Path.Combine(folder, $"{Guid.NewGuid():N}-{SanitizeFileName(personName)}.jpg"); await File.WriteAllBytesAsync(path, bytes);

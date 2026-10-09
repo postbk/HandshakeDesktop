@@ -22,7 +22,7 @@ public partial class ReviewWindow : System.Windows.Window
         var text = raw.Replace("\\n", "\n");
         NameBox.Text = Find(text, "name"); CompanyBox.Text = Find(text, "company"); TitleBox.Text = Find(text, "title");
         EmailBox.Text = Find(text, "email"); PhoneBox.Text = Find(text, "phone"); WebsiteBox.Text = Find(text, "website"); AddressBox.Text = Find(text, "address");
-        if (existing is not null) { NameBox.Text = existing.Name; CompanyBox.Text = existing.Company; TitleBox.Text = existing.Title; EmailBox.Text = existing.Email; PhoneBox.Text = existing.Phone; WebsiteBox.Text = existing.Website; LinkedInBox.Text = existing.LinkedInUrl; AddressBox.Text = existing.Address; NotesBox.Text = existing.Notes; FollowUpBox.Text = existing.FollowUp; DoneBox.IsChecked = existing.Done; ResearchBox.Text = existing.Research; _photoPath = existing.PhotoPath; _cardImagePath = existing.CardImagePath; }
+        if (existing is not null) { NameBox.Text = existing.Name; CompanyBox.Text = existing.Company; TitleBox.Text = existing.Title; EmailBox.Text = existing.Email; PhoneBox.Text = existing.Phone; WebsiteBox.Text = existing.Website; LinkedInBox.Text = existing.LinkedInUrl; AddressBox.Text = existing.Address; BiographyBox.Text = existing.Biography; NotesBox.Text = existing.Notes; FollowUpBox.Text = existing.FollowUp; DoneBox.IsChecked = existing.Done; ResearchBox.Text = existing.Research; _photoPath = existing.PhotoPath; _cardImagePath = existing.CardImagePath; }
         UpdatePhotoPreview();
     }
     private static string Find(string text, string key)
@@ -30,10 +30,11 @@ public partial class ReviewWindow : System.Windows.Window
         var match = System.Text.RegularExpressions.Regex.Match(text, $"[\\\"']{key}[\\\"']\\s*:\\s*[\\\"']([^\\\"']*)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         return match.Success ? match.Groups[1].Value : "";
     }
+    private static string JsonValue(System.Text.Json.JsonElement item, string property) => item.TryGetProperty(property, out var value) && value.ValueKind == System.Text.Json.JsonValueKind.String ? value.GetString() ?? "" : "";
     private void Save_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         if (string.IsNullOrWhiteSpace(NameBox.Text) && string.IsNullOrWhiteSpace(CompanyBox.Text)) { System.Windows.MessageBox.Show("Enter a name or company."); return; }
-        _store.SaveContact(new ContactRecord(_existing?.Id ?? Guid.NewGuid().ToString(), _event.Id, NameBox.Text.Trim(), CompanyBox.Text.Trim(), TitleBox.Text.Trim(), EmailBox.Text.Trim(), PhoneBox.Text.Trim(), WebsiteBox.Text.Trim(), AddressBox.Text.Trim(), RawBox.Text, NotesBox.Text.Trim(), FollowUpBox.Text.Trim(), DoneBox.IsChecked == true, ResearchBox.Text.Trim(), _photoPath, _cardImagePath, LinkedInBox.Text.Trim()));
+        _store.SaveContact(new ContactRecord(_existing?.Id ?? Guid.NewGuid().ToString(), _event.Id, NameBox.Text.Trim(), CompanyBox.Text.Trim(), TitleBox.Text.Trim(), EmailBox.Text.Trim(), PhoneBox.Text.Trim(), WebsiteBox.Text.Trim(), AddressBox.Text.Trim(), RawBox.Text, NotesBox.Text.Trim(), FollowUpBox.Text.Trim(), DoneBox.IsChecked == true, ResearchBox.Text.Trim(), _photoPath, _cardImagePath, LinkedInBox.Text.Trim(), BiographyBox.Text.Trim()));
         DialogResult = true;
     }
 
@@ -71,7 +72,13 @@ public partial class ReviewWindow : System.Windows.Window
         if (PasteClipboardPhoto()) return;
         var candidates = new[] { browser.Result.ImageUrl }.Concat(browser.Result.ImageUrls ?? []).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase);
         foreach (var candidate in candidates) { try { _photoPath = await ImportBrowserPhotoAsync(candidate, NameBox.Text); UpdatePhotoPreview(); break; } catch { } }
+        if (!string.IsNullOrWhiteSpace(browser.Result.VisibleText))
+        {
+            try { ResearchBusyIndicator.Visibility = System.Windows.Visibility.Visible; var summary = await new OpenAiExtractor(new SecureSettings()).SummarizeProfileAsync(browser.Result.VisibleText, NameBox.Text); using var json = System.Text.Json.JsonDocument.Parse(summary); var root = json.RootElement; var lines = new List<string>(); AddProfileLine(lines, "Role", root, "role"); AddProfileLine(lines, "What they do", root, "current_work"); AddProfileList(lines, "Previous work", root, "previous_work"); AddProfileList(lines, "Education", root, "education"); AddProfileLine(lines, "Biography", root, "biography"); BiographyBox.Text = string.Join("\n", lines); FillIfBlank(TitleBox, root, "role"); } catch { } finally { ResearchBusyIndicator.Visibility = System.Windows.Visibility.Collapsed; }
+        }
     }
+    private static void AddProfileLine(List<string> lines, string label, System.Text.Json.JsonElement root, string property) { var value = JsonValue(root, property); if (!string.IsNullOrWhiteSpace(value)) lines.Add($"{label}: {value}"); }
+    private static void AddProfileList(List<string> lines, string label, System.Text.Json.JsonElement root, string property) { if (!root.TryGetProperty(property, out var values) || values.ValueKind != System.Text.Json.JsonValueKind.Array) return; var items = values.EnumerateArray().Where(x => x.ValueKind == System.Text.Json.JsonValueKind.String).Select(x => x.GetString()).Where(x => !string.IsNullOrWhiteSpace(x)).ToList(); if (items.Count > 0) lines.Add($"{label}:\n" + string.Join("\n", items.Select(x => $"• {x}"))); }
     private void PastePhoto_Click(object sender, System.Windows.RoutedEventArgs e) { if (!PasteClipboardPhoto()) System.Windows.MessageBox.Show("Copy a profile image first, then click Paste copied photo."); }
     private bool PasteClipboardPhoto()
     {
