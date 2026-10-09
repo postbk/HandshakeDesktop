@@ -46,7 +46,7 @@ public sealed class OpenAiExtractor
     {
         var key = _settings.GetApiKey();
         if (string.IsNullOrWhiteSpace(key)) throw new InvalidOperationException("Add an OpenAI API key in Settings first.");
-        var content = new List<object> { new { type = "input_text", text = $"Research this exact company for a trade-show follow-up. Company: {company}. Website hint: {website}. Use the attached business-card image to read logos, printed domains, email domains, and capability claims. Use those clues to disambiguate generic company names. Summarize what it does, products/services, markets, and useful follow-up questions. Cite sources inline and distinguish company claims from independently verified information." } };
+        var content = new List<object> { new { type = "input_text", text = $"Research this exact company for a trade-show follow-up. Company: {company}. Website hint: {website}. Use the attached business-card image to read logos, printed domains, email domains, and capability claims. Use those clues to disambiguate generic company names. Summarize what it does, products/services, and markets. Cite sources inline and distinguish company claims from independently verified information. Do not include a list of follow-up questions." } };
         foreach (var image in images ?? []) { var bytes = await File.ReadAllBytesAsync(image.Path, cancellationToken); content.Add(new { type = "input_image", image_url = $"data:image/jpeg;base64,{Convert.ToBase64String(bytes)}", detail = "high" }); }
         var request = new { model = "gpt-4.1", store = false, tools = new[] { new { type = "web_search_preview" } }, input = new[] { new { role = "user", content } } };
         using var message = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/responses");
@@ -57,6 +57,16 @@ public sealed class OpenAiExtractor
         using var json = JsonDocument.Parse(body); if (!json.RootElement.TryGetProperty("output", out var output)) return body;
         foreach (var item in output.EnumerateArray()) if (item.TryGetProperty("content", out var parts)) foreach (var part in parts.EnumerateArray()) if (part.TryGetProperty("text", out var text)) return text.GetString() ?? body;
         return body;
+    }
+
+    public async Task<string> AnalyzeMemoAsync(string transcript, string contact, CancellationToken cancellationToken = default)
+    {
+        var key = _settings.GetApiKey(); if (string.IsNullOrWhiteSpace(key)) throw new InvalidOperationException("Add an OpenAI API key in Settings first.");
+        var schema = new { type = "object", additionalProperties = false, properties = new { bullets = new { type = "array", items = new { type = "string" } }, follow_ups = new { type = "array", items = new { type = "string" } } }, required = new[] { "bullets", "follow_ups" } };
+        var request = new { model = "gpt-4.1-mini", store = false, input = $"Clean up this personal meeting transcript for contact {contact}. Extract concise factual bullets about the person/company/meeting. Extract only explicit promised or requested actions as follow_ups. Do not invent tasks. Transcript:\n{transcript}", text = new { format = new { type = "json_schema", name = "contact_memo", strict = true, schema } } };
+        using var message = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/responses") { Content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json") }; message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
+        using var response = await _http.SendAsync(message, cancellationToken); var body = await response.Content.ReadAsStringAsync(cancellationToken); if (!response.IsSuccessStatusCode) throw new InvalidOperationException($"Memo analysis failed ({(int)response.StatusCode}).");
+        using var json = JsonDocument.Parse(body); if (!json.RootElement.TryGetProperty("output", out var output)) return body; foreach (var item in output.EnumerateArray()) if (item.TryGetProperty("content", out var parts)) foreach (var part in parts.EnumerateArray()) if (part.TryGetProperty("text", out var text)) return text.GetString() ?? body; return body;
     }
 
     public async Task<string> TranscribeAsync(string audioPath, CancellationToken cancellationToken = default)
