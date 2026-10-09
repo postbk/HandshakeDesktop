@@ -35,9 +35,10 @@
         <ComboBox x:Name="EventPicker" DockPanel.Dock="Right" Width="220" Margin="0,0,12,0" SelectionChanged="EventPicker_SelectionChanged" DisplayMemberPath="Name" />
       </DockPanel>
     </Border>
-    <Grid Grid.Row="2">
+    <Grid Grid.Row="2" MinHeight="0">
       <Grid.ColumnDefinitions><ColumnDefinition Width="2*" /><ColumnDefinition Width="3*" /></Grid.ColumnDefinitions>
-      <StackPanel Grid.Column="0" Margin="0,0,12,0" AllowDrop="True" Drop="Window_Drop">
+      <ScrollViewer Grid.Column="0" Margin="0,0,12,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" AllowDrop="True" Drop="Window_Drop">
+        <StackPanel AllowDrop="True" Drop="Window_Drop">
         <Border BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="22" AllowDrop="True" Drop="Window_Drop">
         <StackPanel>
           <TextBlock Text="Add contacts" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource Navy}" />
@@ -60,8 +61,10 @@
             <Button Content="Export contacts to Excel" Margin="0,10,0,0" Click="ExportXlsx_Click" />
           </StackPanel>
         </Border>
-      </StackPanel>
-      <Border Grid.Column="1" Background="#FFFFFF" BorderBrush="#D5DFD9" BorderThickness="1" CornerRadius="12" Padding="22">
+        </StackPanel>
+      </ScrollViewer>
+      <Border Grid.Column="1" Background="#FFFFFF" BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="22" MinHeight="0">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel>
           <TextBlock Text="Contact Imports" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource Navy}" />
           <TextBlock Text="Saved source images for this category." Foreground="{DynamicResource MutedText}" TextWrapping="Wrap" Margin="0,8,0,18" />
@@ -76,6 +79,7 @@
             <Button Grid.Column="1" Content="🗑" FontSize="16" Height="32" Padding="0" Margin="8,0,0,0" ToolTip="Delete selected contact" Click="DeleteContact_Click" />
           </Grid>
         </StackPanel>
+        </ScrollViewer>
       </Border>
     </Grid>
   </Grid>
