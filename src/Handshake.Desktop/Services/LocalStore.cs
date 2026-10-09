@@ -159,8 +159,8 @@ public sealed class LocalStore
     {
         var rows = GetContacts(eventId);
         using var writer = new StreamWriter(path, false, new System.Text.UTF8Encoding(true));
-        writer.WriteLine("name,company,title,email,phone,website,address,notes,follow_up,follow_up_done");
-        foreach (var c in rows) writer.WriteLine(string.Join(",", new[] { c.Name, c.Company, c.Title, c.Email, c.Phone, c.Website, c.Address, c.Notes, c.FollowUp, c.Done ? "true" : "false" }.Select(CsvCell)));
+        writer.WriteLine("name,company,title,email,phone,website,linkedin_url,address,biography,company_research,notes,follow_up,follow_up_done,headshot_path,card_image_path,raw_extraction");
+        foreach (var c in rows) writer.WriteLine(string.Join(",", new[] { c.Name, c.Company, c.Title, c.Email, c.Phone, c.Website, c.LinkedInUrl, c.Address, c.Biography, c.Research, c.Notes, c.FollowUp, c.Done ? "true" : "false", c.PhotoPath, c.CardImagePath, c.RawExtraction }.Select(CsvCell)));
     }
 
     public void ExportVcf(string eventId, string path)
@@ -175,8 +175,15 @@ public sealed class LocalStore
             if (!string.IsNullOrWhiteSpace(c.Email)) writer.WriteLine($"EMAIL:{VCard(c.Email)}");
             if (!string.IsNullOrWhiteSpace(c.Phone)) writer.WriteLine($"TEL:{VCard(c.Phone)}");
             if (!string.IsNullOrWhiteSpace(c.Website)) writer.WriteLine($"URL:{VCard(c.Website)}");
+            if (!string.IsNullOrWhiteSpace(c.LinkedInUrl)) writer.WriteLine($"X-SOCIALPROFILE;TYPE=linkedin:{VCard(c.LinkedInUrl)}");
             if (!string.IsNullOrWhiteSpace(c.Address)) writer.WriteLine($"ADR:;;{VCard(c.Address)}");
-            if (!string.IsNullOrWhiteSpace(c.Notes) || !string.IsNullOrWhiteSpace(c.FollowUp)) writer.WriteLine($"NOTE:{VCard(string.Join("\n", new[] { c.Notes, string.IsNullOrWhiteSpace(c.FollowUp) ? "" : $"Follow-up ({(c.Done ? "done" : "open")}): {c.FollowUp}" }.Where(x => !string.IsNullOrWhiteSpace(x))))}");
+            if (!string.IsNullOrWhiteSpace(c.PhotoPath) && File.Exists(c.PhotoPath))
+            {
+                var type = Path.GetExtension(c.PhotoPath).Equals(".png", StringComparison.OrdinalIgnoreCase) ? "PNG" : "JPEG";
+                writer.WriteLine($"PHOTO;ENCODING=b;TYPE={type}:{Convert.ToBase64String(File.ReadAllBytes(c.PhotoPath))}");
+            }
+            var details = new[] { string.IsNullOrWhiteSpace(c.Biography) ? "" : $"Biography:\n{c.Biography}", string.IsNullOrWhiteSpace(c.Research) ? "" : $"Company research:\n{c.Research}", c.Notes, string.IsNullOrWhiteSpace(c.FollowUp) ? "" : $"Follow-up ({(c.Done ? "done" : "open")}): {c.FollowUp}" }.Where(x => !string.IsNullOrWhiteSpace(x));
+            if (details.Any()) writer.WriteLine($"NOTE:{VCard(string.Join("\n\n", details))}");
             writer.WriteLine("END:VCARD");
         }
     }
