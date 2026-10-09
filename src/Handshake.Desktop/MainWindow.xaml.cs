@@ -44,8 +44,10 @@ public partial class MainWindow : System.Windows.Window
     {
         try
         {
-            if (!System.Windows.Clipboard.ContainsImage()) { StatusText.Text = "Copy an image first, then click Paste image from clipboard."; return; }
-            var bitmap = System.Windows.Clipboard.GetImage(); if (bitmap is null) return;
+            var data = System.Windows.Clipboard.GetDataObject();
+            var bitmap = data is not null && data.GetDataPresent(System.Windows.DataFormats.Bitmap) ? data.GetData(System.Windows.DataFormats.Bitmap) as System.Windows.Media.Imaging.BitmapSource : null;
+            if (bitmap is null && System.Windows.Clipboard.ContainsImage()) bitmap = System.Windows.Clipboard.GetImage();
+            if (bitmap is null) { StatusText.Text = "No bitmap found. In Google Photos, right-click the image and choose Copy image, then paste again."; return; }
             if (_selectedImages.Count >= 4) { StatusText.Text = "A capture can contain up to four images."; return; }
             var normalized = _normalizer.Normalize(bitmap); _selectedImages.Add(new CaptureImage(normalized, "Clipboard image")); StatusText.Text = $"{_selectedImages.Count} image(s) selected. Review them before extraction.";
         }
