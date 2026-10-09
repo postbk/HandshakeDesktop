@@ -118,14 +118,29 @@ public partial class MainWindow : System.Windows.Window
     private void ContactsList_DoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) { if (ContactsList.SelectedItem is ContactRecord contact) { var review = new ReviewWindow(_event, _store, contact.RawExtraction, contact, _selectedImages.ToList()) { Owner = this }; if (review.ShowDialog() == true) RefreshContacts(); } }
     private void EditSelectedContact_Click(object sender, System.Windows.RoutedEventArgs e) { if (ContactsList.SelectedItem is ContactRecord contact) { var review = new ReviewWindow(_event, _store, contact.RawExtraction, contact, _selectedImages.ToList()) { Owner = this }; if (review.ShowDialog() == true) RefreshContacts(); } }
     private void DeleteContact_Click(object sender, System.Windows.RoutedEventArgs e) { if (ContactsList.SelectedItem is not ContactRecord contact) return; if (System.Windows.MessageBox.Show($"Delete {contact.Name}?", "Confirm deletion", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning) != System.Windows.MessageBoxResult.Yes) return; _store.DeleteContact(contact.Id); RefreshContacts(); StatusText.Text = "Contact deleted."; }
-    private void MergeSelectedContacts_Click(object sender, System.Windows.RoutedEventArgs e)
+    private void MergeDuplicates_Click(object sender, System.Windows.RoutedEventArgs e)
     {
-        var selected = ContactsList.SelectedItems.Cast<ContactRecord>().ToList();
-        if (selected.Count < 2) { StatusText.Text = "Select at least two contacts to merge."; return; }
-        var merged = new ContactRecord(selected[0].Id, _event.Id, FirstNonEmpty(selected.Select(c => c.Name)), FirstNonEmpty(selected.Select(c => c.Company)), FirstNonEmpty(selected.Select(c => c.Title)), FirstNonEmpty(selected.Select(c => c.Email)), Combine(selected.Select(c => c.Phone)), FirstNonEmpty(selected.Select(c => c.Website)), FirstNonEmpty(selected.Select(c => c.Address)), Combine(selected.Select(c => c.RawExtraction)), Combine(selected.Select(c => c.Notes)), Combine(selected.Select(c => c.FollowUp)), selected.Any(c => c.Done), Combine(selected.Select(c => c.Research)), FirstNonEmpty(selected.Select(c => c.PhotoPath)), FirstNonEmpty(selected.Select(c => c.CardImagePath)), FirstNonEmpty(selected.Select(c => c.LinkedInUrl)), Combine(selected.Select(c => c.Biography)));
-        var names = string.Join(", ", selected.Select(c => string.IsNullOrWhiteSpace(c.Name) ? "Unnamed contact" : c.Name));
-        if (System.Windows.MessageBox.Show($"Merge these contacts into one record?\n\n{names}\n\nThe first selected contact will be kept as the primary record.", "Confirm contact merge", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question) != System.Windows.MessageBoxResult.Yes) return;
-        _store.SaveContact(merged); foreach (var contact in selected.Skip(1)) _store.DeleteContact(contact.Id); RefreshContacts(); StatusText.Text = $"Merged {selected.Count} contacts.";
+        var groups = _store.GetContacts(_event.Id).GroupBy(DuplicateKey).Where(group => group.Count() > 1).ToList();
+        if (groups.Count == 0) { StatusText.Text = "No duplicates found in this category."; return; }
+        var duplicateCount = groups.Sum(group => group.Count() - 1);
+        if (System.Windows.MessageBox.Show($"Found {groups.Count} duplicate group(s) and {duplicateCount} duplicate record(s).\n\nMerge them automatically? The earliest record in each group will be kept as the primary contact.", "Merge duplicate contacts", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question) != System.Windows.MessageBoxResult.Yes) return;
+        foreach (var group in groups) MergeContactGroup(group.ToList());
+        RefreshContacts(); StatusText.Text = $"Merged {duplicateCount} duplicate contact(s) across {groups.Count} group(s).";
+    }
+    private static string DuplicateKey(ContactRecord contact)
+    {
+        if (!string.IsNullOrWhiteSpace(contact.Email)) return "email:" + contact.Email.Trim().ToLowerInvariant();
+        var name = new string(contact.Name.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
+        var company = new string(contact.Company.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(name) && string.IsNullOrWhiteSpace(company)) return "id:" + contact.Id;
+        return $"name-company:{name}|{company}";
+    }
+    private void MergeContactGroup(IReadOnlyList<ContactRecord> selected)
+    {
+        var primary = selected[0];
+        var merged = new ContactRecord(primary.Id, _event.Id, FirstNonEmpty(selected.Select(c => c.Name)), FirstNonEmpty(selected.Select(c => c.Company)), FirstNonEmpty(selected.Select(c => c.Title)), FirstNonEmpty(selected.Select(c => c.Email)), Combine(selected.Select(c => c.Phone)), FirstNonEmpty(selected.Select(c => c.Website)), FirstNonEmpty(selected.Select(c => c.Address)), Combine(selected.Select(c => c.RawExtraction)), Combine(selected.Select(c => c.Notes)), Combine(selected.Select(c => c.FollowUp)), selected.Any(c => c.Done), Combine(selected.Select(c => c.Research)), FirstNonEmpty(selected.Select(c => c.PhotoPath)), FirstNonEmpty(selected.Select(c => c.CardImagePath)), FirstNonEmpty(selected.Select(c => c.LinkedInUrl)), Combine(selected.Select(c => c.Biography)));
+        _store.SaveContact(merged);
+        foreach (var contact in selected.Skip(1)) _store.DeleteContact(contact.Id);
     }
     private static string FirstNonEmpty(IEnumerable<string> values) => values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)) ?? "";
     private static string Combine(IEnumerable<string> values) => string.Join(Environment.NewLine + Environment.NewLine, values.Where(value => !string.IsNullOrWhiteSpace(value)).Select(value => value.Trim()).Distinct(StringComparer.OrdinalIgnoreCase));

@@ -79,7 +79,7 @@
           <Grid Margin="0,8,0,0">
             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="34" /></Grid.ColumnDefinitions>
             <Button Grid.Column="0" Content="Edit selected contact" Padding="12,8" HorizontalAlignment="Stretch" Click="EditSelectedContact_Click" />
-            <Button Grid.Column="1" Content="Merge selected" Padding="12,8" Margin="7,0,0,0" HorizontalAlignment="Stretch" ToolTip="Select two or more contacts to merge them" Click="MergeSelectedContacts_Click" />
+            <Button Grid.Column="1" Content="Merge duplicates" Padding="12,8" Margin="7,0,0,0" HorizontalAlignment="Stretch" ToolTip="Find and merge duplicate contacts in this category" Click="MergeDuplicates_Click" />
             <Button Grid.Column="2" Content="🗑" FontSize="16" Height="32" Padding="0" Margin="7,0,0,0" ToolTip="Delete selected contact" Click="DeleteContact_Click" />
           </Grid>
         </StackPanel>
