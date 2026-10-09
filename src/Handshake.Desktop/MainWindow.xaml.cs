@@ -28,6 +28,7 @@ public partial class MainWindow : System.Windows.Window
     }
     private void Export_Click(object sender, System.Windows.RoutedEventArgs e) { var d = new SaveFileDialog { Title = "Export Handshake contacts", Filter = "CSV files|*.csv", FileName = "handshake-contacts.csv" }; if (d.ShowDialog() != true) return; _store.ExportCsv(_event.Id, d.FileName); StatusText.Text = "Contacts exported to CSV."; }
     private void ExportVcf_Click(object sender, System.Windows.RoutedEventArgs e) { var d = new SaveFileDialog { Title = "Export Handshake contacts", Filter = "vCard files|*.vcf", FileName = "handshake-contacts.vcf" }; if (d.ShowDialog() != true) return; _store.ExportVcf(_event.Id, d.FileName); StatusText.Text = "Contacts exported to vCard."; }
+    private void ExportXlsx_Click(object sender, System.Windows.RoutedEventArgs e) { var d = new SaveFileDialog { Title = "Export Handshake contacts", Filter = "Excel files|*.xlsx", FileName = "handshake-contacts.xlsx" }; if (d.ShowDialog() != true) return; _store.ExportXlsx(_event.Id, d.FileName); StatusText.Text = "Contacts exported to Excel."; }
     private async void Extract_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         if (ImagesList.SelectedItem is not CaptureImage selectedImage) { StatusText.Text = "Select the image to extract before continuing."; return; }

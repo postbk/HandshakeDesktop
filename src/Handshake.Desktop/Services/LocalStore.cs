@@ -1,6 +1,7 @@
 using Handshake.Desktop.Models;
 using Microsoft.Data.Sqlite;
 using System.IO;
+using ClosedXML.Excel;
 
 namespace Handshake.Desktop.Services;
 
@@ -175,20 +176,30 @@ public sealed class LocalStore
             if (!string.IsNullOrWhiteSpace(c.Email)) writer.WriteLine($"EMAIL:{VCard(c.Email)}");
             if (!string.IsNullOrWhiteSpace(c.Phone)) writer.WriteLine($"TEL:{VCard(c.Phone)}");
             if (!string.IsNullOrWhiteSpace(c.Website)) writer.WriteLine($"URL:{VCard(c.Website)}");
-            if (!string.IsNullOrWhiteSpace(c.LinkedInUrl)) writer.WriteLine($"X-SOCIALPROFILE;TYPE=linkedin:{VCard(c.LinkedInUrl)}");
+            if (!string.IsNullOrWhiteSpace(c.LinkedInUrl)) { writer.WriteLine($"URL;TYPE=linkedin:{VCard(c.LinkedInUrl)}"); writer.WriteLine($"X-SOCIALPROFILE;TYPE=linkedin:{VCard(c.LinkedInUrl)}"); }
             if (!string.IsNullOrWhiteSpace(c.Address)) writer.WriteLine($"ADR:;;{VCard(c.Address)}");
             if (!string.IsNullOrWhiteSpace(c.PhotoPath) && File.Exists(c.PhotoPath))
             {
                 var type = Path.GetExtension(c.PhotoPath).Equals(".png", StringComparison.OrdinalIgnoreCase) ? "PNG" : "JPEG";
                 writer.WriteLine($"PHOTO;ENCODING=b;TYPE={type}:{Convert.ToBase64String(File.ReadAllBytes(c.PhotoPath))}");
             }
-            var details = new[] { string.IsNullOrWhiteSpace(c.Biography) ? "" : $"Biography:\n{c.Biography}", string.IsNullOrWhiteSpace(c.Research) ? "" : $"Company research:\n{c.Research}", c.Notes, string.IsNullOrWhiteSpace(c.FollowUp) ? "" : $"Follow-up ({(c.Done ? "done" : "open")}): {c.FollowUp}" }.Where(x => !string.IsNullOrWhiteSpace(x));
+            var details = new[] { string.IsNullOrWhiteSpace(c.Website) ? "" : $"Company URL: {c.Website}", string.IsNullOrWhiteSpace(c.Biography) ? "" : $"Biography:\n{c.Biography}", string.IsNullOrWhiteSpace(c.Research) ? "" : $"Company research:\n{c.Research}", c.Notes, string.IsNullOrWhiteSpace(c.FollowUp) ? "" : $"Follow-up ({(c.Done ? "done" : "open")}): {c.FollowUp}" }.Where(x => !string.IsNullOrWhiteSpace(x));
             if (details.Any()) writer.WriteLine($"NOTE:{VCard(string.Join("\n\n", details))}");
             writer.WriteLine("END:VCARD");
         }
     }
 
-    private static string VCard(string value) => value.Replace("\\", "\\\\").Replace(";", "\\;").Replace(",", "\\,").Replace("\r", "").Replace("\n", "\\n");
+    public void ExportXlsx(string eventId, string path)
+    {
+        using var workbook = new XLWorkbook(); var sheet = workbook.Worksheets.Add("Contacts");
+        var headers = new[] { "Name", "Company", "Title", "Email", "Phone", "Website", "LinkedIn", "Address", "Biography", "Company research", "Notes", "Follow-up", "Done", "Headshot", "Card image" };
+        for (var i = 0; i < headers.Length; i++) { var cell = sheet.Cell(1, i + 1); cell.Value = headers[i]; cell.Style.Font.Bold = true; cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#17324D"); cell.Style.Font.FontColor = XLColor.White; }
+        var row = 2; foreach (var c in GetContacts(eventId)) { var values = new[] { c.Name, c.Company, c.Title, c.Email, c.Phone, c.Website, c.LinkedInUrl, c.Address, c.Biography, c.Research, c.Notes, c.FollowUp, c.Done ? "Yes" : "No", c.PhotoPath, c.CardImagePath }; for (var i = 0; i < values.Length; i++) sheet.Cell(row, i + 1).Value = values[i]; AddHyperlink(sheet.Cell(row, 6), c.Website); AddHyperlink(sheet.Cell(row, 7), c.LinkedInUrl); AddPicture(sheet, c.PhotoPath, row, 14); AddPicture(sheet, c.CardImagePath, row, 15); row++; }
+        sheet.SheetView.FreezeRows(1); sheet.Columns().AdjustToContents(); sheet.Column(9).Width = 42; sheet.Column(10).Width = 42; sheet.Column(11).Width = 32; sheet.Column(12).Width = 28; workbook.SaveAs(path);
+    }
+    private static void AddHyperlink(IXLCell cell, string url) { if (Uri.TryCreate(url, UriKind.Absolute, out var uri)) { cell.SetHyperlink(new XLHyperlink(uri)); cell.Style.Font.FontColor = XLColor.Blue; cell.Style.Font.Underline = XLFontUnderlineValues.Single; } }
+    private static void AddPicture(IXLWorksheet sheet, string path, int row, int column) { if (!File.Exists(path)) return; try { sheet.AddPicture(path).MoveTo(sheet.Cell(row, column)).WithSize(120, 90); sheet.Row(row).Height = 72; } catch { } }
+    private static string VCard(string value) => value.Replace("â€¢ ", "- ").Replace("• ", "- ").Replace("\\", "\\\\").Replace(";", "\\;").Replace(",", "\\,").Replace("\r", "").Replace("\n", "\\n");
 
     private static string CsvCell(string value) => $"\"{value.Replace("\"", "\"\"")}\"";
 

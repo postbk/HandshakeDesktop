@@ -48,6 +48,7 @@
             <TextBlock Text="Save your network for use in other applications." Foreground="{DynamicResource MutedText}" TextWrapping="Wrap" Margin="0,6,0,14" />
             <Button Content="Export contacts to CSV" Click="Export_Click" />
             <Button Content="Export contacts to vCard" Margin="0,10,0,0" Click="ExportVcf_Click" />
+            <Button Content="Export contacts to Excel" Margin="0,10,0,0" Click="ExportXlsx_Click" />
           </StackPanel>
         </Border>
       </StackPanel>
