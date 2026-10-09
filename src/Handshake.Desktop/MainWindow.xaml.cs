@@ -104,6 +104,7 @@ public partial class MainWindow : System.Windows.Window
     private async void Transcribe_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         if (string.IsNullOrWhiteSpace(_audio.CurrentPath) || !File.Exists(_audio.CurrentPath)) { StatusText.Text = "Record a voice memo first."; return; }
+        BusyIndicator.Visibility = System.Windows.Visibility.Visible;
         try
         {
             StatusText.Text = "Transcribing memo…";
@@ -115,7 +116,7 @@ public partial class MainWindow : System.Windows.Window
             append.Click += (_, _) => { if (ContactsList.SelectedItem is ContactRecord contact && !string.IsNullOrWhiteSpace(box.Text)) { _store.AppendNotes(contact.Id, box.Text); dialog.DialogResult = true; RefreshContacts(); StatusText.Text = "Transcript appended to personal notes."; } };
             dialog.ShowDialog(); if (!append.IsEnabled) StatusText.Text = "Transcript ready for review.";
         }
-        catch (Exception error) { StatusText.Text = error.Message; }
+        catch (Exception error) { StatusText.Text = error.Message; } finally { BusyIndicator.Visibility = System.Windows.Visibility.Collapsed; }
     }
 
     private void ImportAudio_Click(object sender, System.Windows.RoutedEventArgs e)
@@ -128,6 +129,7 @@ public partial class MainWindow : System.Windows.Window
     private async void Extract_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         if (_selectedImages.Count == 0) { StatusText.Text = "Select images before extraction."; return; }
+        BusyIndicator.Visibility = System.Windows.Visibility.Visible;
         try
         {
             StatusText.Text = "Uploading images for extraction…";
@@ -136,7 +138,7 @@ public partial class MainWindow : System.Windows.Window
             if (review.ShowDialog() == true) { RefreshContacts(); StatusText.Text = "Contact reviewed and saved locally."; }
             else StatusText.Text = "Extraction completed; review was left open or cancelled.";
         }
-        catch (Exception error) { StatusText.Text = error.Message; }
+        catch (Exception error) { StatusText.Text = error.Message; } finally { BusyIndicator.Visibility = System.Windows.Visibility.Collapsed; }
     }
 
     private void RefreshContacts()

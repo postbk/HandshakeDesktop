@@ -43,7 +43,8 @@
           <Button x:Name="MemoButton" Content="Record voice memo (59 sec max)" Padding="18,11" Margin="0,10,0,0" Click="Memo_Click" />
           <Button Content="Import audio memo…" Padding="18,11" Margin="0,10,0,0" Click="ImportAudio_Click" />
           <Button Content="Transcribe latest memo" Padding="18,11" Margin="0,10,0,0" Click="Transcribe_Click" />
-          <TextBlock x:Name="StatusText" Text="No images selected yet." Foreground="#60716D" TextWrapping="Wrap" Margin="0,20,0,0" />
+          <ProgressBar x:Name="BusyIndicator" Height="5" IsIndeterminate="True" Visibility="Collapsed" Margin="0,20,0,0" />
+          <TextBlock x:Name="StatusText" Text="No images selected yet." Foreground="#60716D" TextWrapping="Wrap" Margin="0,8,0,0" />
         </StackPanel>
       </Border>
       <Border Grid.Column="1" Background="#FFFFFF" BorderBrush="#D5DFD9" BorderThickness="1" CornerRadius="12" Padding="22">

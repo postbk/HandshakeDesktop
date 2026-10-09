@@ -11,6 +11,8 @@ public partial class ReviewWindow : System.Windows.Window
     private readonly ContactRecord? _existing;
     private readonly IReadOnlyList<CaptureImage> _images;
     private readonly AudioMemoService _audio = new();
+    private System.Windows.Threading.DispatcherTimer? _memoTimer;
+    private int _memoSeconds;
     public ReviewWindow(EventRecord eventRecord, LocalStore store, string raw, ContactRecord? existing = null, IEnumerable<CaptureImage>? images = null)
     {
         InitializeComponent(); _event = eventRecord; _store = store; _existing = existing; _images = (images ?? []).ToList(); RawBox.Text = raw;
@@ -36,12 +38,13 @@ public partial class ReviewWindow : System.Windows.Window
         if (string.IsNullOrWhiteSpace(CompanyBox.Text)) { System.Windows.MessageBox.Show("Enter a company first."); return; }
         try
         {
+            BusyIndicator.Visibility = System.Windows.Visibility.Visible;
             var result = await new OpenAiExtractor(new SecureSettings()).ResearchAsync(CompanyBox.Text, WebsiteBox.Text, _images);
             using var json = System.Text.Json.JsonDocument.Parse(result); var root = json.RootElement;
             ResearchBox.Text = root.GetProperty("summary").GetString() ?? result;
             FillIfBlank(CompanyBox, root, "company"); FillIfBlank(WebsiteBox, root, "website"); FillIfBlank(AddressBox, root, "address"); FillIfBlank(PhoneBox, root, "phone"); FillIfBlank(EmailBox, root, "email");
         }
-        catch (Exception error) { System.Windows.MessageBox.Show(error.Message, "Research failed"); }
+        catch (Exception error) { System.Windows.MessageBox.Show(error.Message, "Research failed"); } finally { BusyIndicator.Visibility = System.Windows.Visibility.Collapsed; }
     }
 
     private static void FillIfBlank(System.Windows.Controls.TextBox box, System.Text.Json.JsonElement root, string property)
@@ -49,7 +52,7 @@ public partial class ReviewWindow : System.Windows.Window
 
     private void RecordMemo_Click(object sender, System.Windows.RoutedEventArgs e)
     {
-        try { if (_audio.IsRecording) { _audio.Stop(); RecordMemoButton.Content = "Record"; } else { _audio.Start(); RecordMemoButton.Content = "Stop"; } } catch (Exception error) { System.Windows.MessageBox.Show(error.Message, "Recording failed"); }
+        try { if (_audio.IsRecording) { _audio.Stop(); _memoTimer?.Stop(); RecordMemoButton.Content = "Record"; MemoCountdown.Text = ""; } else { _audio.Start(); _memoSeconds = 0; RecordMemoButton.Content = "Stop"; MemoCountdown.Text = "0:59"; _memoTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) }; _memoTimer.Tick += (_, _) => { _memoSeconds++; MemoCountdown.Text = $"0:{59 - _memoSeconds:00}"; if (_memoSeconds >= 59) RecordMemo_Click(this, new System.Windows.RoutedEventArgs()); }; _memoTimer.Start(); } } catch (Exception error) { System.Windows.MessageBox.Show(error.Message, "Recording failed"); }
     }
 
     private async void AnalyzeMemo_Click(object sender, System.Windows.RoutedEventArgs e)
@@ -57,6 +60,7 @@ public partial class ReviewWindow : System.Windows.Window
         if (string.IsNullOrWhiteSpace(_audio.CurrentPath) || !File.Exists(_audio.CurrentPath)) { System.Windows.MessageBox.Show("Record a memo first."); return; }
         try
         {
+            BusyIndicator.Visibility = System.Windows.Visibility.Visible;
             if (_audio.IsRecording) _audio.Stop();
             var transcript = await new OpenAiExtractor(new SecureSettings()).TranscribeAsync(_audio.CurrentPath!);
             var organized = await new OpenAiExtractor(new SecureSettings()).AnalyzeMemoAsync(transcript, NameBox.Text + " at " + CompanyBox.Text);
@@ -64,6 +68,6 @@ public partial class ReviewWindow : System.Windows.Window
             var bullets = root.GetProperty("bullets").EnumerateArray().Select(x => "• " + x.GetString()).Where(x => !string.IsNullOrWhiteSpace(x)); var actions = root.GetProperty("follow_ups").EnumerateArray().Select(x => x.GetString()).Where(x => !string.IsNullOrWhiteSpace(x));
             NotesBox.Text = string.Join("\n", new[] { NotesBox.Text }.Concat(bullets).Where(x => !string.IsNullOrWhiteSpace(x))); FollowUpBox.Text = string.Join("\n", new[] { FollowUpBox.Text }.Concat(actions).Where(x => !string.IsNullOrWhiteSpace(x))); RecordMemoButton.Content = "Record";
         }
-        catch (Exception error) { System.Windows.MessageBox.Show(error.Message, "Memo analysis failed"); }
+        catch (Exception error) { System.Windows.MessageBox.Show(error.Message, "Memo analysis failed"); } finally { BusyIndicator.Visibility = System.Windows.Visibility.Collapsed; }
     }
 }
