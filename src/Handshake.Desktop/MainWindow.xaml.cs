@@ -1,5 +1,6 @@
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
+using System.IO;
 using Handshake.Desktop.Models;
 using Handshake.Desktop.Services;
 
@@ -32,6 +33,15 @@ public partial class MainWindow : System.Windows.Window
     }
     private void RefreshContacts() { var query = SearchBox?.Text?.Trim() ?? ""; ContactsList.ItemsSource = _store.GetContacts(_event.Id).Where(c => string.IsNullOrWhiteSpace(query) || string.Join(" ", c.Name, c.Company, c.Title, c.Email, c.Phone, c.Website, c.Address).Contains(query, StringComparison.OrdinalIgnoreCase)).ToList(); }
     private void LoadEventImages() { _selectedImages.Clear(); foreach (var image in _store.GetCaptureImages(_event.Id)) _selectedImages.Add(image); StatusText.Text = _selectedImages.Count == 0 ? $"No images saved for {_event.Name}." : $"Loaded {_selectedImages.Count} saved image(s) for {_event.Name}."; }
+    private void DeleteImage_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (ImagesList.SelectedItem is not CaptureImage image) { StatusText.Text = "Select an image to delete."; return; }
+        var eventFolder = Path.GetFullPath(_store.GetEventFolder(_event.Id));
+        var imagePath = Path.GetFullPath(image.Path);
+        if (!imagePath.StartsWith(eventFolder + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) { StatusText.Text = "Only images stored for this event can be deleted."; return; }
+        if (System.Windows.MessageBox.Show($"Delete {image.DisplayName}?", "Confirm image deletion", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning) != System.Windows.MessageBoxResult.Yes) return;
+        _store.DeleteCaptureImage(_event.Id, image.Path); if (File.Exists(image.Path)) File.Delete(image.Path); _selectedImages.Remove(image); StatusText.Text = $"Deleted {image.DisplayName}.";
+    }
     private void SearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => RefreshContacts();
     private void ContactsList_DoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) { if (ContactsList.SelectedItem is ContactRecord contact) { var review = new ReviewWindow(_event, _store, contact.RawExtraction, contact, _selectedImages.ToList()) { Owner = this }; if (review.ShowDialog() == true) RefreshContacts(); } }
     private void DeleteContact_Click(object sender, System.Windows.RoutedEventArgs e) { if (ContactsList.SelectedItem is not ContactRecord contact) return; if (System.Windows.MessageBox.Show($"Delete {contact.Name}?", "Confirm deletion", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning) != System.Windows.MessageBoxResult.Yes) return; _store.DeleteContact(contact.Id); RefreshContacts(); StatusText.Text = "Contact deleted."; }

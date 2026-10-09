@@ -83,6 +83,37 @@ public sealed class LocalStore
         command.ExecuteNonQuery();
     }
 
+    public void DeleteCaptureImage(string eventId, string imagePath)
+    {
+        using var connection = Open();
+        using var query = connection.CreateCommand();
+        query.CommandText = "SELECT id, images FROM captures WHERE event_id = $event";
+        query.Parameters.AddWithValue("$event", eventId);
+        var updates = new List<(string Id, List<string> Paths)>();
+        using var rows = query.ExecuteReader();
+        while (rows.Read())
+        {
+            var paths = System.Text.Json.JsonSerializer.Deserialize<List<string>>(rows.GetString(1)) ?? [];
+            if (paths.RemoveAll(path => string.Equals(path, imagePath, StringComparison.OrdinalIgnoreCase)) > 0)
+                updates.Add((rows.GetString(0), paths));
+        }
+        foreach (var update in updates)
+        {
+            using var command = connection.CreateCommand();
+            if (update.Paths.Count == 0)
+            {
+                command.CommandText = "DELETE FROM captures WHERE id = $id";
+            }
+            else
+            {
+                command.CommandText = "UPDATE captures SET images = $images WHERE id = $id";
+                command.Parameters.AddWithValue("$images", System.Text.Json.JsonSerializer.Serialize(update.Paths));
+            }
+            command.Parameters.AddWithValue("$id", update.Id);
+            command.ExecuteNonQuery();
+        }
+    }
+
     public void SaveContact(ContactRecord contact)
     {
         using var connection = Open();
