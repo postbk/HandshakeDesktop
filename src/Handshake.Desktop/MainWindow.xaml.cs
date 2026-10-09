@@ -43,9 +43,9 @@ public partial class MainWindow : System.Windows.Window
                 if (!string.IsNullOrWhiteSpace(company))
                 {
                     StatusText.Text = $"Researching {company}…";
-                    try { using var researchJson = System.Text.Json.JsonDocument.Parse(await extractor.ResearchAsync(company, website, selected)); var researchRoot = researchJson.RootElement; company = FirstValue(company, researchRoot, "company"); website = FirstValue(website, researchRoot, "website"); var address = JsonValue(item, "address"); var phone = JsonValue(item, "phone"); var email = JsonValue(item, "email"); address = FirstValue(address, researchRoot, "address"); phone = FirstValue(phone, researchRoot, "phone"); email = FirstValue(email, researchRoot, "email"); research = JsonValue(researchRoot, "summary"); var confidence = JsonValue(researchRoot, "photo_confidence"); var photoUrl = JsonValue(researchRoot, "photo_url"); if ((confidence == "high" || confidence == "medium") && Uri.TryCreate(photoUrl, UriKind.Absolute, out _)) photoPath = await DownloadPhotoAsync(photoUrl, name); SaveContact(item, name, company, website, address, phone, email, research, photoPath); saved++; continue; } catch { }
+                    try { using var researchJson = System.Text.Json.JsonDocument.Parse(await extractor.ResearchAsync(company, website, selected)); var researchRoot = researchJson.RootElement; company = FirstValue(company, researchRoot, "company"); website = FirstValue(website, researchRoot, "website"); var address = JsonValue(item, "address"); var phone = JsonValue(item, "phone"); var email = JsonValue(item, "email"); address = FirstValue(address, researchRoot, "address"); phone = FirstValue(phone, researchRoot, "phone"); email = FirstValue(email, researchRoot, "email"); research = JsonValue(researchRoot, "summary"); var photoUrl = JsonValue(researchRoot, "photo_url"); if (!string.IsNullOrWhiteSpace(photoUrl) && Uri.TryCreate(photoUrl, UriKind.Absolute, out _)) photoPath = await DownloadPhotoAsync(photoUrl, name); SaveContact(item, name, company, website, address, phone, email, research, photoPath, selectedImage.Path); saved++; continue; } catch { }
                 }
-                SaveContact(item, name, company, website, JsonValue(item, "address"), JsonValue(item, "phone"), JsonValue(item, "email"), research, photoPath); saved++;
+                SaveContact(item, name, company, website, JsonValue(item, "address"), JsonValue(item, "phone"), JsonValue(item, "email"), research, photoPath, selectedImage.Path); saved++;
             }
             RefreshContacts(); StatusText.Text = $"Added {saved} contact(s) to the list. Use Edit to add details.";
         }
@@ -53,8 +53,8 @@ public partial class MainWindow : System.Windows.Window
         finally { BusyIndicator.Visibility = System.Windows.Visibility.Collapsed; }
     }
 
-    private void SaveContact(System.Text.Json.JsonElement item, string name, string company, string website, string address, string phone, string email, string research, string photoPath)
-    { _store.SaveContact(new ContactRecord(Guid.NewGuid().ToString(), _event.Id, name, company, JsonValue(item, "title"), email, phone, website, address, item.GetRawText(), "", "", false, research, photoPath)); }
+    private void SaveContact(System.Text.Json.JsonElement item, string name, string company, string website, string address, string phone, string email, string research, string photoPath, string cardImagePath)
+    { _store.SaveContact(new ContactRecord(Guid.NewGuid().ToString(), _event.Id, name, company, JsonValue(item, "title"), email, phone, website, address, item.GetRawText(), "", "", false, research, photoPath, cardImagePath)); }
     private async Task<string> DownloadPhotoAsync(string url, string personName)
     {
         using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) }; using var response = await client.GetAsync(url); response.EnsureSuccessStatusCode(); var bytes = await response.Content.ReadAsByteArrayAsync(); if (bytes.Length == 0 || bytes.Length > 10_000_000) throw new InvalidOperationException("Headshot was not a usable image."); var folder = Path.Combine(_store.GetEventFolder(_event.Id), "contact-photos"); Directory.CreateDirectory(folder); var path = Path.Combine(folder, $"{Guid.NewGuid():N}-{SanitizeFileName(personName)}.jpg"); await File.WriteAllBytesAsync(path, bytes); return path;

@@ -14,13 +14,14 @@ public partial class ReviewWindow : System.Windows.Window
     private System.Windows.Threading.DispatcherTimer? _memoTimer;
     private int _memoSeconds;
     private string _photoPath = "";
+    private string _cardImagePath = "";
     public ReviewWindow(EventRecord eventRecord, LocalStore store, string raw, ContactRecord? existing = null, IEnumerable<CaptureImage>? images = null)
     {
         InitializeComponent(); _event = eventRecord; _store = store; _existing = existing; _images = (images ?? []).ToList(); RawBox.Text = raw;
         var text = raw.Replace("\\n", "\n");
         NameBox.Text = Find(text, "name"); CompanyBox.Text = Find(text, "company"); TitleBox.Text = Find(text, "title");
         EmailBox.Text = Find(text, "email"); PhoneBox.Text = Find(text, "phone"); WebsiteBox.Text = Find(text, "website"); AddressBox.Text = Find(text, "address");
-        if (existing is not null) { NameBox.Text = existing.Name; CompanyBox.Text = existing.Company; TitleBox.Text = existing.Title; EmailBox.Text = existing.Email; PhoneBox.Text = existing.Phone; WebsiteBox.Text = existing.Website; AddressBox.Text = existing.Address; NotesBox.Text = existing.Notes; FollowUpBox.Text = existing.FollowUp; DoneBox.IsChecked = existing.Done; ResearchBox.Text = existing.Research; _photoPath = existing.PhotoPath; }
+        if (existing is not null) { NameBox.Text = existing.Name; CompanyBox.Text = existing.Company; TitleBox.Text = existing.Title; EmailBox.Text = existing.Email; PhoneBox.Text = existing.Phone; WebsiteBox.Text = existing.Website; AddressBox.Text = existing.Address; NotesBox.Text = existing.Notes; FollowUpBox.Text = existing.FollowUp; DoneBox.IsChecked = existing.Done; ResearchBox.Text = existing.Research; _photoPath = existing.PhotoPath; _cardImagePath = existing.CardImagePath; }
         UpdatePhotoPreview();
     }
     private static string Find(string text, string key)
@@ -31,7 +32,7 @@ public partial class ReviewWindow : System.Windows.Window
     private void Save_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         if (string.IsNullOrWhiteSpace(NameBox.Text) && string.IsNullOrWhiteSpace(CompanyBox.Text)) { System.Windows.MessageBox.Show("Enter a name or company."); return; }
-        _store.SaveContact(new ContactRecord(_existing?.Id ?? Guid.NewGuid().ToString(), _event.Id, NameBox.Text.Trim(), CompanyBox.Text.Trim(), TitleBox.Text.Trim(), EmailBox.Text.Trim(), PhoneBox.Text.Trim(), WebsiteBox.Text.Trim(), AddressBox.Text.Trim(), RawBox.Text, NotesBox.Text.Trim(), FollowUpBox.Text.Trim(), DoneBox.IsChecked == true, ResearchBox.Text.Trim(), _photoPath));
+        _store.SaveContact(new ContactRecord(_existing?.Id ?? Guid.NewGuid().ToString(), _event.Id, NameBox.Text.Trim(), CompanyBox.Text.Trim(), TitleBox.Text.Trim(), EmailBox.Text.Trim(), PhoneBox.Text.Trim(), WebsiteBox.Text.Trim(), AddressBox.Text.Trim(), RawBox.Text, NotesBox.Text.Trim(), FollowUpBox.Text.Trim(), DoneBox.IsChecked == true, ResearchBox.Text.Trim(), _photoPath, _cardImagePath));
         DialogResult = true;
     }
 
@@ -59,7 +60,7 @@ public partial class ReviewWindow : System.Windows.Window
         _photoPath = new ImageNormalizer().Normalize(dialog.FileName, Path.Combine(_store.GetEventFolder(_event.Id), "contact-photos")); UpdatePhotoPreview();
     }
 
-    private void DeletePhoto_Click(object sender, System.Windows.RoutedEventArgs e) { _photoPath = ""; PhotoPreview.Source = null; }
+    private void DeletePhoto_Click(object sender, System.Windows.RoutedEventArgs e) { if (File.Exists(_cardImagePath)) { try { _photoPath = new ImageNormalizer().CreateTightCrop(_cardImagePath, Path.Combine(_store.GetEventFolder(_event.Id), "contact-photos")); } catch { _photoPath = _cardImagePath; } } else _photoPath = ""; UpdatePhotoPreview(); }
     private void UpdatePhotoPreview() { if (File.Exists(_photoPath)) { var image = new System.Windows.Media.Imaging.BitmapImage(); image.BeginInit(); image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad; image.UriSource = new Uri(_photoPath); image.EndInit(); image.Freeze(); PhotoPreview.Source = image; } }
 
     private void RecordMemo_Click(object sender, System.Windows.RoutedEventArgs e)
