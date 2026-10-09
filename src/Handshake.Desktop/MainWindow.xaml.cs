@@ -109,7 +109,53 @@ public partial class MainWindow : System.Windows.Window
     private static bool IsImageFile(string file) => new[] { ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff" }.Contains(System.IO.Path.GetExtension(file), StringComparer.OrdinalIgnoreCase);
     private void NewEvent_Click(object sender, System.Windows.RoutedEventArgs e)
     {
-        var dialog = new System.Windows.Window { Title = "New category", Width = 420, Height = 260, WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner, Owner = this }; var name = new System.Windows.Controls.TextBox { Margin = new System.Windows.Thickness(16, 8, 16, 8) }; var location = new System.Windows.Controls.TextBox { Margin = new System.Windows.Thickness(16, 8, 16, 8) }; var dates = new System.Windows.Controls.TextBox { Margin = new System.Windows.Thickness(16, 8, 16, 8) }; var save = new System.Windows.Controls.Button { Content = "Create category", Padding = new System.Windows.Thickness(12, 7, 12, 7), Margin = new System.Windows.Thickness(16) }; var panel = new System.Windows.Controls.StackPanel(); panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Category name", Margin = new System.Windows.Thickness(16, 12, 16, 0) }); panel.Children.Add(name); panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Description", Margin = new System.Windows.Thickness(16, 0, 16, 0) }); panel.Children.Add(location); panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Notes", Margin = new System.Windows.Thickness(16, 0, 16, 0) }); panel.Children.Add(dates); panel.Children.Add(save); dialog.Content = panel; save.Click += (_, _) => { if (string.IsNullOrWhiteSpace(name.Text)) return; _event = _store.CreateEvent(name.Text, location.Text, dates.Text); EventPicker.ItemsSource = _store.GetEvents(); EventPicker.SelectedValuePath = "Id"; EventPicker.SelectedValue = _event.Id; UpdateEventHeader(); LoadEventImages(); RefreshContacts(); dialog.Close(); }; dialog.ShowDialog();
+        var dialog = new System.Windows.Window
+        {
+            Title = "Create category",
+            Width = 460,
+            Height = 340,
+            WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner,
+            Owner = this,
+            ResizeMode = System.Windows.ResizeMode.NoResize,
+            Background = (System.Windows.Media.Brush)FindResource("Ivory")
+        };
+        var name = new System.Windows.Controls.TextBox { Margin = new System.Windows.Thickness(0, 6, 0, 14), MinHeight = 30 };
+        var description = new System.Windows.Controls.TextBox { Margin = new System.Windows.Thickness(0, 6, 0, 14), MinHeight = 30 };
+        var notes = new System.Windows.Controls.TextBox { Margin = new System.Windows.Thickness(0, 6, 0, 18), MinHeight = 30 };
+        var save = new System.Windows.Controls.Button
+        {
+            Content = "Create category",
+            IsDefault = true,
+            Padding = new System.Windows.Thickness(22, 10, 22, 10),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
+            MinWidth = 150
+        };
+        var panel = new System.Windows.Controls.StackPanel { Margin = new System.Windows.Thickness(24) };
+        panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Category name", FontWeight = System.Windows.FontWeights.SemiBold });
+        panel.Children.Add(name);
+        panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Description" });
+        panel.Children.Add(description);
+        panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Notes" });
+        panel.Children.Add(notes);
+        panel.Children.Add(save);
+        dialog.Content = panel;
+        save.Click += (_, _) =>
+        {
+            if (string.IsNullOrWhiteSpace(name.Text))
+            {
+                name.Focus();
+                return;
+            }
+            _event = _store.CreateEvent(name.Text.Trim(), description.Text.Trim(), notes.Text.Trim());
+            EventPicker.ItemsSource = _store.GetEvents();
+            EventPicker.SelectedValuePath = "Id";
+            EventPicker.SelectedValue = _event.Id;
+            UpdateEventHeader();
+            LoadEventImages();
+            RefreshContacts();
+            dialog.Close();
+        };
+        dialog.ShowDialog();
     }
     private void RenameCategory_Click(object sender, System.Windows.RoutedEventArgs e)
     {
