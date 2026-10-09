@@ -1,6 +1,7 @@
 using Handshake.Desktop.Models;
 using Handshake.Desktop.Services;
 using System.IO;
+using System.Net.Http;
 
 namespace Handshake.Desktop;
 
@@ -62,10 +63,19 @@ public partial class ReviewWindow : System.Windows.Window
 
     private void DeletePhoto_Click(object sender, System.Windows.RoutedEventArgs e) { if (File.Exists(_cardImagePath)) { try { _photoPath = new ImageNormalizer().CreateTightCrop(_cardImagePath, Path.Combine(_store.GetEventFolder(_event.Id), "contact-photos")); } catch { _photoPath = _cardImagePath; } } else _photoPath = ""; UpdatePhotoPreview(); }
     private void OpenLinkedIn_Click(object sender, System.Windows.RoutedEventArgs e) { if (Uri.TryCreate(LinkedInBox.Text.Trim(), UriKind.Absolute, out var uri)) System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true }); }
-    private void FindLinkedIn_Click(object sender, System.Windows.RoutedEventArgs e)
+    private async void FindLinkedIn_Click(object sender, System.Windows.RoutedEventArgs e)
     {
-        var query = Uri.EscapeDataString($"{NameBox.Text.Trim()} {CompanyBox.Text.Trim()} LinkedIn");
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo($"https://www.google.com/search?q={query}") { UseShellExecute = true });
+        var browser = new LinkedInBrowserWindow(NameBox.Text.Trim(), CompanyBox.Text.Trim()) { Owner = this };
+        if (browser.ShowDialog() != true || browser.Result is null) return;
+        if (browser.Result.Url.Contains("linkedin.com/in/", StringComparison.OrdinalIgnoreCase)) LinkedInBox.Text = browser.Result.Url;
+        if (!string.IsNullOrWhiteSpace(browser.Result.ImageUrl))
+        {
+            try { _photoPath = await ImportBrowserPhotoAsync(browser.Result.ImageUrl, NameBox.Text); UpdatePhotoPreview(); } catch { }
+        }
+    }
+    private async Task<string> ImportBrowserPhotoAsync(string url, string person)
+    {
+        using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) }; var bytes = await client.GetByteArrayAsync(url); if (bytes.Length == 0 || bytes.Length > 10_000_000) throw new InvalidOperationException("The profile image is not usable."); var folder = Path.Combine(_store.GetEventFolder(_event.Id), "contact-photos"); Directory.CreateDirectory(folder); var path = Path.Combine(folder, $"linkedin-{Guid.NewGuid():N}.jpg"); await File.WriteAllBytesAsync(path, bytes); try { var image = new System.Windows.Media.Imaging.BitmapImage(); image.BeginInit(); image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad; image.UriSource = new Uri(path); image.EndInit(); image.Freeze(); return path; } catch { File.Delete(path); throw; }
     }
     private void UpdatePhotoPreview()
     {
