@@ -68,8 +68,14 @@ public partial class ReviewWindow : System.Windows.Window
         var browser = new LinkedInBrowserWindow(NameBox.Text.Trim(), CompanyBox.Text.Trim()) { Owner = this };
         if (browser.ShowDialog() != true || browser.Result is null) return;
         if (!string.IsNullOrWhiteSpace(browser.Result.Url) && browser.Result.Url.Contains("linkedin.com/in/", StringComparison.OrdinalIgnoreCase)) LinkedInBox.Text = browser.Result.Url;
+        if (PasteClipboardPhoto()) return;
         var candidates = new[] { browser.Result.ImageUrl }.Concat(browser.Result.ImageUrls ?? []).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase);
         foreach (var candidate in candidates) { try { _photoPath = await ImportBrowserPhotoAsync(candidate, NameBox.Text); UpdatePhotoPreview(); break; } catch { } }
+    }
+    private void PastePhoto_Click(object sender, System.Windows.RoutedEventArgs e) { if (!PasteClipboardPhoto()) System.Windows.MessageBox.Show("Copy a profile image first, then click Paste copied photo."); }
+    private bool PasteClipboardPhoto()
+    {
+        try { var bitmap = System.Windows.Clipboard.ContainsImage() ? System.Windows.Clipboard.GetImage() : null; if (bitmap is null) return false; _photoPath = new ImageNormalizer().Normalize(bitmap, Path.Combine(_store.GetEventFolder(_event.Id), "contact-photos")); UpdatePhotoPreview(); return true; } catch { return false; }
     }
     private async Task<string> ImportBrowserPhotoAsync(string url, string person)
     {

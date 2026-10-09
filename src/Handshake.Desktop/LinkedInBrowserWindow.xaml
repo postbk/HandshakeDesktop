@@ -1,6 +1,6 @@
 <Window x:Class="Handshake.Desktop.LinkedInBrowserWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf" Title="Find LinkedIn profile" Width="1100" Height="760" WindowStartupLocation="CenterOwner">
   <DockPanel>
-    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8"><Button Content="Back" Click="Back_Click" Padding="10,5" /><Button Content="Forward" Click="Forward_Click" Padding="10,5" Margin="6,0,0,0" /><Button Content="Import this profile" Click="Import_Click" Padding="12,5" Margin="18,0,0,0" /><TextBlock x:Name="StatusText" Margin="14,6,0,0" /></StackPanel>
+    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8"><Button Content="Back" Click="Back_Click" Padding="10,5" /><Button Content="Forward" Click="Forward_Click" Padding="10,5" Margin="6,0,0,0" /><Button Content="Import profile + pasted photo" Click="Import_Click" Padding="12,5" Margin="18,0,0,0" /><TextBlock x:Name="StatusText" Text="Right-click the headshot, choose Copy image, then import." Margin="14,6,0,0" /></StackPanel>
     <wv2:WebView2 x:Name="Browser" />
   </DockPanel>
 </Window>
