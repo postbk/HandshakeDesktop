@@ -30,19 +30,27 @@
     </Border>
     <Grid Grid.Row="2">
       <Grid.ColumnDefinitions><ColumnDefinition Width="2*" /><ColumnDefinition Width="3*" /></Grid.ColumnDefinitions>
-      <Border Grid.Column="0" BorderBrush="#D5DFD9" BorderThickness="1" CornerRadius="12" Padding="22" Margin="0,0,12,0" AllowDrop="True" Drop="Window_Drop">
+      <StackPanel Grid.Column="0" Margin="0,0,12,0" AllowDrop="True" Drop="Window_Drop">
+        <Border BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="22" AllowDrop="True" Drop="Window_Drop">
         <StackPanel>
           <TextBlock Text="Add contacts" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource Navy}" />
           <TextBlock Text="Bring in a business card or contact image from your PC or clipboard. Images are saved automatically with the selected category." TextWrapping="Wrap" Margin="0,8,0,20" Foreground="{DynamicResource MutedText}" />
           <Button Content="Choose local images…" Padding="18,11" Click="ChooseImages_Click" />
           <Button Content="Paste image from clipboard" Padding="18,11" Margin="0,10,0,0" Click="PasteImage_Click" />
           <Button Content="Extract contact details" Padding="18,11" Margin="0,10,0,0" Click="Extract_Click" />
-          <Button Content="Export contacts to CSV…" Padding="18,11" Margin="0,10,0,0" Click="Export_Click" />
-          <Button Content="Export contacts to vCard…" Padding="18,11" Margin="0,10,0,0" Click="ExportVcf_Click" />
           <ProgressBar x:Name="BusyIndicator" Height="5" IsIndeterminate="True" Visibility="Collapsed" Margin="0,20,0,0" />
           <TextBlock x:Name="StatusText" Text="No images selected yet." Foreground="#60716D" TextWrapping="Wrap" Margin="0,8,0,0" />
         </StackPanel>
-      </Border>
+        </Border>
+        <Border BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="22" Margin="0,14,0,0">
+          <StackPanel>
+            <TextBlock Text="Export contacts" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource Navy}" />
+            <TextBlock Text="Save your network for use in other applications." Foreground="{DynamicResource MutedText}" TextWrapping="Wrap" Margin="0,6,0,14" />
+            <Button Content="Export contacts to CSV" Click="Export_Click" />
+            <Button Content="Export contacts to vCard" Margin="0,10,0,0" Click="ExportVcf_Click" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
       <Border Grid.Column="1" Background="#FFFFFF" BorderBrush="#D5DFD9" BorderThickness="1" CornerRadius="12" Padding="22">
         <StackPanel>
           <TextBlock Text="Contact Imports" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource Navy}" />
