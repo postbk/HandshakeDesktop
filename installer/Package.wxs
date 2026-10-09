@@ -7,7 +7,8 @@
     <Property Id="ARPPRODUCTICON" Value="HandshakeIcon" />
     <StandardDirectory Id="ProgramFiles6432Folder">
       <Directory Id="INSTALLFOLDER" Name="Handshake">
-        <Component Id="Application" Guid="*">
+        <Component Id="Application" Guid="B7AFCA8E-0B64-4E83-93B7-9A1F4C9C7D12">
+          <RegistryValue Root="HKCU" Key="Software\Handshake" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
           <File Id="HandshakeExe" Source="C:\Users\bp6\Documents\Codex\2026-10-08\can\work\HandshakeDesktop\artifacts\win-x64\Handshake.Desktop.exe">
             <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="Handshake" WorkingDirectory="INSTALLFOLDER" />
             <Shortcut Id="DesktopShortcut" Directory="DesktopFolder" Name="Handshake" WorkingDirectory="INSTALLFOLDER" />
