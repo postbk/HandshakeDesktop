@@ -18,7 +18,7 @@ public partial class LinkedInBrowserWindow : System.Windows.Window
     private void Forward_Click(object sender, System.Windows.RoutedEventArgs e) { if (Browser.CanGoForward) Browser.GoForward(); }
     private async void Import_Click(object sender, System.Windows.RoutedEventArgs e)
     {
-        try { var raw = await Browser.CoreWebView2.ExecuteScriptAsync("JSON.stringify({url:location.href||'',title:document.title||'',text:(document.body?document.body.innerText:''),image:(document.querySelector('meta[property=\\\"og:image\\\"]')||{}).content||'',images:[...document.images].map(x=>x.currentSrc||x.src).filter(x=>x)})"); var json = JsonSerializer.Deserialize<string>(raw) ?? "{}"; Result = JsonSerializer.Deserialize<LinkedInImportResult>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }); if (Result is not null) DialogResult = true; }
+        try { var raw = await Browser.CoreWebView2.ExecuteScriptAsync("JSON.stringify({url:location.href||'',title:document.title||'',visibleText:(document.body?document.body.innerText:''),imageUrl:(document.querySelector('meta[property=\\\"og:image\\\"]')||{}).content||'',imageUrls:[...document.images].map(x=>x.currentSrc||x.src).filter(x=>x)})"); var json = JsonSerializer.Deserialize<string>(raw) ?? "{}"; Result = JsonSerializer.Deserialize<LinkedInImportResult>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }); if (Result is not null) DialogResult = true; }
         catch (Exception error) { StatusText.Text = error.Message; }
     }
 }
