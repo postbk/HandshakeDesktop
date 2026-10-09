@@ -118,7 +118,7 @@ public partial class MainWindow : System.Windows.Window
         {
             StatusText.Text = "Uploading images for extraction…";
             var result = await new OpenAiExtractor(_settings).ExtractAsync(_selectedImages);
-            var review = new ReviewWindow(_event, _store, result) { Owner = this };
+            var review = new ReviewWindow(_event, _store, result, images: _selectedImages.ToList()) { Owner = this };
             if (review.ShowDialog() == true) { RefreshContacts(); StatusText.Text = "Contact reviewed and saved locally."; }
             else StatusText.Text = "Extraction completed; review was left open or cancelled.";
         }
@@ -135,7 +135,7 @@ public partial class MainWindow : System.Windows.Window
 
     private void ContactsList_DoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        if (ContactsList.SelectedItem is ContactRecord contact) { var review = new ReviewWindow(_event, _store, contact.RawExtraction, contact) { Owner = this }; if (review.ShowDialog() == true) RefreshContacts(); }
+        if (ContactsList.SelectedItem is ContactRecord contact) { var review = new ReviewWindow(_event, _store, contact.RawExtraction, contact, _selectedImages.ToList()) { Owner = this }; if (review.ShowDialog() == true) RefreshContacts(); }
     }
 
     private void DeleteContact_Click(object sender, System.Windows.RoutedEventArgs e)

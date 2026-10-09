@@ -11,6 +11,7 @@
     <TextBlock Text="Private notes" /><TextBox x:Name="NotesBox" Height="70" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,4,0,10" />
     <TextBlock Text="Follow-up" /><TextBox x:Name="FollowUpBox" Height="55" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,4,0,10" />
     <CheckBox x:Name="DoneBox" Content="Follow-up complete" Margin="0,0,0,14" />
+    <TextBlock Text="Company research" /><TextBox x:Name="ResearchBox" Height="110" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,4,0,14" />
     <TextBlock Text="Raw AI response" FontWeight="SemiBold" /><TextBox x:Name="RawBox" Height="130" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Margin="0,4,0,14" />
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"><Button Content="Research company" Padding="14,9" Margin="0,0,10,0" Click="Research_Click" /><Button Content="Save contact" Padding="14,9" Click="Save_Click" /></StackPanel>
   </StackPanel></ScrollViewer>

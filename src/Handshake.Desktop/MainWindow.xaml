@@ -38,6 +38,7 @@
           <Button Content="Extract contact details" Padding="18,11" Margin="0,10,0,0" Click="Extract_Click" />
           <Button Content="Export contacts to CSV…" Padding="18,11" Margin="0,10,0,0" Click="Export_Click" />
           <Button Content="Export contacts to vCard…" Padding="18,11" Margin="0,10,0,0" Click="ExportVcf_Click" />
+          <TextBlock Text="Personal audio notes" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource ForestTeal}" Margin="0,18,0,0" />
           <Button x:Name="MemoButton" Content="Record voice memo (59 sec max)" Padding="18,11" Margin="0,10,0,0" Click="Memo_Click" />
           <Button Content="Import audio memo…" Padding="18,11" Margin="0,10,0,0" Click="ImportAudio_Click" />
           <Button Content="Transcribe latest memo" Padding="18,11" Margin="0,10,0,0" Click="Transcribe_Click" />

@@ -65,23 +65,24 @@ public sealed class LocalStore
     {
         using var connection = Open();
         using var command = connection.CreateCommand();
-        command.CommandText = "INSERT OR REPLACE INTO contacts(id, event_id, name, company, title, email, phone, website, address, raw_extraction, notes, follow_up, done, created_at) VALUES ($id, $event, $name, $company, $title, $email, $phone, $website, $address, $raw, $notes, $follow, $done, $created)";
+        command.CommandText = "INSERT OR REPLACE INTO contacts(id, event_id, name, company, title, email, phone, website, address, raw_extraction, notes, follow_up, done, research, created_at) VALUES ($id, $event, $name, $company, $title, $email, $phone, $website, $address, $raw, $notes, $follow, $done, $research, $created)";
         command.Parameters.AddWithValue("$id", contact.Id); command.Parameters.AddWithValue("$event", contact.EventId);
         command.Parameters.AddWithValue("$name", contact.Name); command.Parameters.AddWithValue("$company", contact.Company);
         command.Parameters.AddWithValue("$title", contact.Title); command.Parameters.AddWithValue("$email", contact.Email);
         command.Parameters.AddWithValue("$phone", contact.Phone); command.Parameters.AddWithValue("$website", contact.Website);
         command.Parameters.AddWithValue("$address", contact.Address); command.Parameters.AddWithValue("$raw", contact.RawExtraction);
         command.Parameters.AddWithValue("$notes", contact.Notes); command.Parameters.AddWithValue("$follow", contact.FollowUp); command.Parameters.AddWithValue("$done", contact.Done ? 1 : 0);
+        command.Parameters.AddWithValue("$research", contact.Research);
         command.Parameters.AddWithValue("$created", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()); command.ExecuteNonQuery();
     }
 
     public List<ContactRecord> GetContacts(string eventId)
     {
         using var connection = Open(); using var command = connection.CreateCommand();
-        command.CommandText = "SELECT id, event_id, name, company, title, email, phone, website, address, raw_extraction, notes, follow_up, done FROM contacts WHERE event_id = $event ORDER BY created_at DESC";
+        command.CommandText = "SELECT id, event_id, name, company, title, email, phone, website, address, raw_extraction, notes, follow_up, done, research FROM contacts WHERE event_id = $event ORDER BY created_at DESC";
         command.Parameters.AddWithValue("$event", eventId);
         using var rows = command.ExecuteReader(); var contacts = new List<ContactRecord>();
-        while (rows.Read()) contacts.Add(new ContactRecord(rows.GetString(0), rows.GetString(1), rows.GetString(2), rows.GetString(3), rows.GetString(4), rows.GetString(5), rows.GetString(6), rows.GetString(7), rows.GetString(8), rows.GetString(9), rows.IsDBNull(10) ? "" : rows.GetString(10), rows.IsDBNull(11) ? "" : rows.GetString(11), !rows.IsDBNull(12) && rows.GetInt64(12) != 0));
+        while (rows.Read()) contacts.Add(new ContactRecord(rows.GetString(0), rows.GetString(1), rows.GetString(2), rows.GetString(3), rows.GetString(4), rows.GetString(5), rows.GetString(6), rows.GetString(7), rows.GetString(8), rows.GetString(9), rows.IsDBNull(10) ? "" : rows.GetString(10), rows.IsDBNull(11) ? "" : rows.GetString(11), !rows.IsDBNull(12) && rows.GetInt64(12) != 0, rows.IsDBNull(13) ? "" : rows.GetString(13)));
         return contacts;
     }
 
@@ -142,5 +143,6 @@ public sealed class LocalStore
         command.ExecuteNonQuery();
         foreach (var sql in new[] { "ALTER TABLE contacts ADD COLUMN notes TEXT NOT NULL DEFAULT ''", "ALTER TABLE contacts ADD COLUMN follow_up TEXT NOT NULL DEFAULT ''", "ALTER TABLE contacts ADD COLUMN done INTEGER NOT NULL DEFAULT 0" })
         { try { using var migration = connection.CreateCommand(); migration.CommandText = sql; migration.ExecuteNonQuery(); } catch (Microsoft.Data.Sqlite.SqliteException) { } }
+        try { using var migration = connection.CreateCommand(); migration.CommandText = "ALTER TABLE contacts ADD COLUMN research TEXT NOT NULL DEFAULT ''"; migration.ExecuteNonQuery(); } catch (Microsoft.Data.Sqlite.SqliteException) { }
     }
 }
