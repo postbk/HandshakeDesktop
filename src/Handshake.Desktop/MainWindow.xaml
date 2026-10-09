@@ -3,36 +3,39 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Handshake" Icon="/Handshake.Desktop;component/Assets/handshake-icon.png" Width="1100" Height="720" MinWidth="850" MinHeight="560"
         Background="{DynamicResource Ivory}" AllowDrop="True" Drop="Window_Drop">
-  <Grid Margin="28">
+  <Grid Margin="24">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
-    <DockPanel Grid.Row="0" Margin="0,0,0,22">
+    <DockPanel Grid.Row="0" Margin="0,0,0,16" LastChildFill="False">
       <StackPanel Orientation="Horizontal">
-        <Border Width="68" Height="68" CornerRadius="14" Background="White" BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1" Padding="6" Margin="0,0,16,0">
+        <Border Width="58" Height="58" CornerRadius="13" Background="White" BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1" Padding="5" Margin="0,0,14,0">
           <Image Source="/Handshake.Desktop;component/Assets/handshake-icon.png" Stretch="Uniform" />
         </Border>
         <StackPanel VerticalAlignment="Center">
-          <TextBlock Text="Handshake" FontSize="32" FontWeight="SemiBold" Foreground="{DynamicResource Navy}" />
-          <TextBlock Text="Build meaningful connections, organized and actionable" FontSize="15" Foreground="{DynamicResource MutedText}" Margin="0,4,0,0" />
+          <TextBlock Text="Handshake" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource Navy}" />
+          <TextBlock Text="Build meaningful connections, organized and actionable" FontSize="13" Foreground="{DynamicResource MutedText}" Margin="0,2,0,0" />
         </StackPanel>
       </StackPanel>
-      <Menu DockPanel.Dock="Right" VerticalAlignment="Top" FontSize="13" Background="Transparent">
+      <Menu DockPanel.Dock="Right" VerticalAlignment="Center" FontSize="13" Background="Transparent" Margin="16,0,0,0">
         <MenuItem Header="Settings" Click="Settings_Click" />
       </Menu>
     </DockPanel>
-    <Border Grid.Row="1" Background="{DynamicResource Mint}" CornerRadius="12" Padding="18" Margin="0,0,0,18">
-      <DockPanel>
-        <StackPanel>
-          <TextBlock x:Name="EventNameText" Text="Current category" FontWeight="SemiBold" Foreground="{DynamicResource Navy}" />
-          <TextBlock x:Name="EventDetailsText" Text="Choose a category or create one to organize your network." Margin="0,5,0,0" />
+    <Border Grid.Row="1" Background="{DynamicResource Mint}" BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1" CornerRadius="12" Padding="14,12" Margin="0,0,0,16">
+      <DockPanel LastChildFill="True" VerticalAlignment="Center">
+        <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,18,0">
+          <TextBlock Text="ACTIVE CATEGORY" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource ForestTeal}" />
+          <TextBlock x:Name="EventNameText" Text="Current category" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource Navy}" Margin="0,2,0,0" />
+          <TextBlock x:Name="EventDetailsText" Text="Choose a category or create one to organize your network." FontSize="12" Foreground="{DynamicResource MutedText}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
         </StackPanel>
-        <Button DockPanel.Dock="Right" Content="New category" Padding="18,9" Click="NewEvent_Click" />
-        <Button DockPanel.Dock="Right" Content="Rename" Padding="12,9" Margin="0,0,8,0" Click="RenameCategory_Click" />
-        <Button DockPanel.Dock="Right" Content="Delete" Padding="12,9" Margin="0,0,8,0" Click="DeleteCategory_Click" />
-        <ComboBox x:Name="EventPicker" DockPanel.Dock="Right" Width="220" Margin="0,0,12,0" SelectionChanged="EventPicker_SelectionChanged" DisplayMemberPath="Name" />
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+          <ComboBox x:Name="EventPicker" Width="210" Height="34" Margin="0,0,10,0" SelectionChanged="EventPicker_SelectionChanged" DisplayMemberPath="Name" />
+          <Button Content="New category" Padding="15,7" Click="NewEvent_Click" />
+          <Button Content="Rename" Padding="11,7" Margin="7,0,0,0" Click="RenameCategory_Click" />
+          <Button Content="Delete" Padding="11,7" Margin="7,0,0,0" Click="DeleteCategory_Click" />
+        </StackPanel>
       </DockPanel>
     </Border>
     <Grid Grid.Row="2" MinHeight="0">
