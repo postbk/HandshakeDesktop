@@ -166,8 +166,13 @@ public sealed class LocalStore
 
     public void ExportVcf(string eventId, string path)
     {
+        ExportVcf(GetContacts(eventId), path);
+    }
+
+    public void ExportVcf(IEnumerable<ContactRecord> contacts, string path)
+    {
         using var writer = new StreamWriter(path, false, new System.Text.UTF8Encoding(false));
-        foreach (var c in GetContacts(eventId))
+        foreach (var c in contacts)
         {
             writer.WriteLine("BEGIN:VCARD\nVERSION:3.0");
             writer.WriteLine($"FN:{VCard(c.Name)}");
