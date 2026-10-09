@@ -49,6 +49,28 @@ public sealed class LocalStore
         using var connection = Open(); using var command = connection.CreateCommand(); command.CommandText = "SELECT id, name, location, dates FROM events ORDER BY created_at DESC"; using var rows = command.ExecuteReader(); var events = new List<EventRecord>(); while (rows.Read()) events.Add(new EventRecord(rows.GetString(0), rows.GetString(1), rows.GetString(2), rows.GetString(3))); return events;
     }
 
+    public string GetEventFolder(string eventId)
+    {
+        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Handshake", "events", eventId);
+        Directory.CreateDirectory(folder);
+        return folder;
+    }
+
+    public List<CaptureImage> GetCaptureImages(string eventId)
+    {
+        using var connection = Open(); using var command = connection.CreateCommand();
+        command.CommandText = "SELECT images FROM captures WHERE event_id = $event ORDER BY created_at";
+        command.Parameters.AddWithValue("$event", eventId);
+        using var rows = command.ExecuteReader(); var images = new List<CaptureImage>();
+        while (rows.Read())
+        {
+            var paths = System.Text.Json.JsonSerializer.Deserialize<List<string>>(rows.GetString(0)) ?? [];
+            foreach (var path in paths.Where(File.Exists).Distinct(StringComparer.OrdinalIgnoreCase))
+                images.Add(new CaptureImage(path, Path.GetFileName(path)));
+        }
+        return images.DistinctBy(x => x.Path, StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
     public void SaveCapture(EventRecord eventRecord, IEnumerable<CaptureImage> images)
     {
         using var connection = Open();

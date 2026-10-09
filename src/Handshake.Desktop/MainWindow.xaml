@@ -31,18 +31,12 @@
       <Border Grid.Column="0" BorderBrush="#D5DFD9" BorderThickness="1" CornerRadius="12" Padding="22" Margin="0,0,12,0" AllowDrop="True" Drop="Window_Drop">
         <StackPanel>
           <TextBlock Text="Import images" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource ForestTeal}" />
-          <TextBlock Text="Bring in a business card, brochure, or fact sheet from your PC or Google Photos. You can also drag image files anywhere into this window." TextWrapping="Wrap" Margin="0,8,0,20" />
+          <TextBlock Text="Bring in a business card, brochure, or fact sheet from your PC or clipboard. You can also drag image files anywhere into this window. Images are saved automatically with the selected event." TextWrapping="Wrap" Margin="0,8,0,20" />
           <Button Content="Choose local images…" Padding="18,11" Click="ChooseImages_Click" />
           <Button Content="Paste image from clipboard" Padding="18,11" Margin="0,10,0,0" Click="PasteImage_Click" />
-          <Button Content="Choose from Google Photos…" Padding="18,11" Margin="0,10,0,0" Click="GooglePhotos_Click" />
-          <Button Content="Save capture locally" Padding="18,11" Margin="0,10,0,0" Click="SaveCapture_Click" />
           <Button Content="Extract contact details" Padding="18,11" Margin="0,10,0,0" Click="Extract_Click" />
           <Button Content="Export contacts to CSV…" Padding="18,11" Margin="0,10,0,0" Click="Export_Click" />
           <Button Content="Export contacts to vCard…" Padding="18,11" Margin="0,10,0,0" Click="ExportVcf_Click" />
-          <TextBlock Text="Personal audio notes" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource ForestTeal}" Margin="0,18,0,0" />
-          <Button x:Name="MemoButton" Content="Record voice memo (59 sec max)" Padding="18,11" Margin="0,10,0,0" Click="Memo_Click" />
-          <Button Content="Import audio memo…" Padding="18,11" Margin="0,10,0,0" Click="ImportAudio_Click" />
-          <Button Content="Transcribe latest memo" Padding="18,11" Margin="0,10,0,0" Click="Transcribe_Click" />
           <ProgressBar x:Name="BusyIndicator" Height="5" IsIndeterminate="True" Visibility="Collapsed" Margin="0,20,0,0" />
           <TextBlock x:Name="StatusText" Text="No images selected yet." Foreground="#60716D" TextWrapping="Wrap" Margin="0,8,0,0" />
         </StackPanel>
