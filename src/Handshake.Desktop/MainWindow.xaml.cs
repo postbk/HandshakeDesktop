@@ -22,6 +22,20 @@ public partial class MainWindow : System.Windows.Window
         UpdateEventHeader(); LoadEventImages(); RefreshContacts(); StatusText.Text = $"Ready for {_event.Name}. Add a contact image or drag one into this window.";
     }
     private void ChooseImages_Click(object sender, System.Windows.RoutedEventArgs e) { var d = new OpenFileDialog { Title = "Select business cards or company documents", Filter = "Images|*.jpg;*.jpeg;*.png;*.webp;*.bmp;*.tif;*.tiff|All files|*.*", Multiselect = true }; if (d.ShowDialog() == true) AddImages(d.FileNames); }
+    private void ImportContacts_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        var d = new OpenFileDialog { Title = "Import contacts", Filter = "Contact files|*.csv;*.xls;*.xlsx;*.vcf;*.vcard|All files|*.*", Multiselect = true };
+        if (d.ShowDialog() != true) return;
+        try
+        {
+            var imported = 0;
+            foreach (var file in d.FileNames)
+                imported += _store.ImportContacts(_event.Id, file);
+            RefreshContacts();
+            StatusText.Text = imported == 0 ? "No contacts were found in the selected files." : $"Imported {imported} contact(s) into {_event.Name}.";
+        }
+        catch (Exception error) { StatusText.Text = $"Could not import contacts: {error.Message}"; }
+    }
     private void PasteImage_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         try { var data = System.Windows.Clipboard.GetDataObject(); var bitmap = data is not null && data.GetDataPresent(System.Windows.DataFormats.Bitmap) ? data.GetData(System.Windows.DataFormats.Bitmap) as System.Windows.Media.Imaging.BitmapSource : null; if (bitmap is null && System.Windows.Clipboard.ContainsImage()) bitmap = System.Windows.Clipboard.GetImage(); if (bitmap is null) { StatusText.Text = "No bitmap found. Copy an image to the clipboard, then paste again."; return; } if (_selectedImages.Count >= 4) { StatusText.Text = "A capture can contain up to four images."; return; } var normalized = _normalizer.Normalize(bitmap, _store.GetEventFolder(_event.Id)); var image = new CaptureImage(normalized, "Clipboard image"); _selectedImages.Add(image); _store.SaveCapture(_event, [image]); StatusText.Text = $"{_selectedImages.Count} image(s) selected and saved for {_event.Name}."; } catch (Exception error) { StatusText.Text = $"Could not paste image: {error.Message}"; }

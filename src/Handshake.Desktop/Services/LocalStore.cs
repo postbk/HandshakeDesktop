@@ -2,6 +2,9 @@ using Handshake.Desktop.Models;
 using Microsoft.Data.Sqlite;
 using System.IO;
 using ClosedXML.Excel;
+using ExcelDataReader;
+using System.Data;
+using System.Text;
 
 namespace Handshake.Desktop.Services;
 
@@ -144,6 +147,75 @@ public sealed class LocalStore
         command.Parameters.AddWithValue("$linkedin", contact.LinkedInUrl);
         command.Parameters.AddWithValue("$bio", contact.Biography);
         command.Parameters.AddWithValue("$created", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()); command.ExecuteNonQuery();
+    }
+
+    public int ImportContacts(string eventId, string path)
+    {
+        var extension = Path.GetExtension(path).ToLowerInvariant();
+        var contacts = extension switch
+        {
+            ".csv" => ParseCsv(File.ReadAllText(path)),
+            ".vcf" or ".vcard" => ParseVCard(File.ReadAllText(path)),
+            ".xls" or ".xlsx" => ParseSpreadsheet(path),
+            _ => []
+        };
+        foreach (var contact in contacts)
+            SaveContact(contact with { EventId = eventId, Id = Guid.NewGuid().ToString() });
+        return contacts.Count;
+    }
+
+    private static List<ContactRecord> ParseSpreadsheet(string path)
+    {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        using var stream = File.OpenRead(path);
+        using var reader = ExcelReaderFactory.CreateReader(stream);
+        var data = reader.AsDataSet(new ExcelDataSetConfiguration { ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = true } });
+        var table = data.Tables.Count == 0 ? null : data.Tables[0];
+        if (table is null) return [];
+        return table.Rows.Cast<DataRow>().Select(row => FromFields(table.Columns.Cast<DataColumn>().ToDictionary(c => c.ColumnName, c => row[c]?.ToString() ?? "", StringComparer.OrdinalIgnoreCase))).Where(HasIdentity).ToList();
+    }
+
+    private static List<ContactRecord> ParseCsv(string text)
+    {
+        var rows = text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries).Select(ParseCsvLine).ToList();
+        if (rows.Count < 2) return [];
+        var headers = rows[0];
+        return rows.Skip(1).Select(row => FromFields(headers.Select((h, i) => (h, i < row.Count ? row[i] : "")).ToDictionary(x => x.h, x => x.Item2, StringComparer.OrdinalIgnoreCase))).Where(HasIdentity).ToList();
+    }
+
+    private static List<ContactRecord> ParseVCard(string text)
+    {
+        var result = new List<ContactRecord>();
+        foreach (var block in text.Replace("\r\n ", "").Replace("\n ", "").Split("BEGIN:VCARD", StringSplitOptions.RemoveEmptyEntries))
+        {
+            var fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var line in block.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                var index = line.IndexOf(':'); if (index < 0) continue;
+                var key = line[..index].Split(';')[0].ToUpperInvariant();
+                var value = line[(index + 1)..].Replace("\\n", Environment.NewLine).Replace("\\,", ",").Replace("\\;", ";").Replace("\\\\", "\\");
+                if (fields.TryGetValue(key, out var existing)) fields[key] = existing + Environment.NewLine + value; else fields[key] = value;
+            }
+            var contact = FromFields(fields);
+            if (HasIdentity(contact)) result.Add(contact);
+        }
+        return result;
+    }
+
+    private static ContactRecord FromFields(IReadOnlyDictionary<string, string> fields)
+    {
+        string Get(params string[] names) => names.Select(n => fields.FirstOrDefault(x => x.Key.Equals(n, StringComparison.OrdinalIgnoreCase)).Value).FirstOrDefault(v => !string.IsNullOrWhiteSpace(v)) ?? "";
+        var website = Get("website", "url");
+        var notes = Get("notes", "note");
+        return new ContactRecord(Guid.NewGuid().ToString(), "", Get("name", "full name", "fn"), Get("company", "organization", "org"), Get("title", "job title"), Get("email", "e-mail"), Get("phone", "mobile", "telephone", "tel"), website, Get("address", "mailing address", "adr"), "", notes, Get("follow_up", "follow-up"), string.Equals(Get("done", "follow_up_done"), "true", StringComparison.OrdinalIgnoreCase), Get("company_research", "research"), Get("headshot_path", "photo", "photo_path"), Get("card_image_path"), Get("linkedin_url", "linkedin"), Get("biography", "bio"));
+    }
+
+    private static bool HasIdentity(ContactRecord c) => !string.IsNullOrWhiteSpace(c.Name) || !string.IsNullOrWhiteSpace(c.Email) || !string.IsNullOrWhiteSpace(c.Company);
+    private static List<string> ParseCsvLine(string line)
+    {
+        var values = new List<string>(); var current = new StringBuilder(); var quoted = false;
+        for (var i = 0; i < line.Length; i++) { var ch = line[i]; if (ch == '"' && quoted && i + 1 < line.Length && line[i + 1] == '"') { current.Append('"'); i++; } else if (ch == '"') quoted = !quoted; else if (ch == ',' && !quoted) { values.Add(current.ToString()); current.Clear(); } else current.Append(ch); }
+        values.Add(current.ToString()); return values;
     }
 
     public List<ContactRecord> GetContacts(string eventId)
