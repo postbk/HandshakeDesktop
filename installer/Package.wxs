@@ -8,9 +8,14 @@
     <StandardDirectory Id="ProgramFiles6432Folder">
       <Directory Id="INSTALLFOLDER" Name="Handshake">
         <Component Id="Application" Guid="*">
-          <File Id="HandshakeExe" Source="C:\Users\bp6\Documents\Codex\2026-10-08\can\work\HandshakeDesktop\artifacts\win-x64\Handshake.Desktop.exe" />
+          <File Id="HandshakeExe" Source="C:\Users\bp6\Documents\Codex\2026-10-08\can\work\HandshakeDesktop\artifacts\win-x64\Handshake.Desktop.exe">
+            <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="Handshake" WorkingDirectory="INSTALLFOLDER" />
+            <Shortcut Id="DesktopShortcut" Directory="DesktopFolder" Name="Handshake" WorkingDirectory="INSTALLFOLDER" />
+          </File>
         </Component>
       </Directory>
     </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder" />
+    <StandardDirectory Id="DesktopFolder" />
   </Package>
 </Wix>
