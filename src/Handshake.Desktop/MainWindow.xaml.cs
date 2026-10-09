@@ -90,7 +90,17 @@ public partial class MainWindow : System.Windows.Window
     private async void Transcribe_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         if (string.IsNullOrWhiteSpace(_audio.CurrentPath) || !File.Exists(_audio.CurrentPath)) { StatusText.Text = "Record a voice memo first."; return; }
-        try { StatusText.Text = "Transcribing memo…"; var text = await new OpenAiExtractor(_settings).TranscribeAsync(_audio.CurrentPath); var box = new System.Windows.Controls.TextBox { Text = text, AcceptsReturn = true, TextWrapping = System.Windows.TextWrapping.Wrap, Width = 640, Height = 260, Margin = new System.Windows.Thickness(18) }; var dialog = new System.Windows.Window { Title = "Review transcript", Content = box, Width = 700, Height = 380, Owner = this, WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner }; dialog.ShowDialog(); StatusText.Text = "Transcript ready for review."; }
+        try
+        {
+            StatusText.Text = "Transcribing memo…";
+            var text = await new OpenAiExtractor(_settings).TranscribeAsync(_audio.CurrentPath);
+            var box = new System.Windows.Controls.TextBox { Text = text, AcceptsReturn = true, TextWrapping = System.Windows.TextWrapping.Wrap, Width = 640, Height = 260, Margin = new System.Windows.Thickness(18) };
+            var append = new System.Windows.Controls.Button { Content = "Append to selected contact notes", Padding = new System.Windows.Thickness(12, 7, 12, 7), Margin = new System.Windows.Thickness(18, 0, 18, 18), IsEnabled = ContactsList.SelectedItem is ContactRecord };
+            var panel = new System.Windows.Controls.StackPanel(); panel.Children.Add(box); panel.Children.Add(append);
+            var dialog = new System.Windows.Window { Title = "Review transcript", Content = panel, Width = 700, Height = 420, Owner = this, WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner };
+            append.Click += (_, _) => { if (ContactsList.SelectedItem is ContactRecord contact && !string.IsNullOrWhiteSpace(box.Text)) { _store.AppendNotes(contact.Id, box.Text); dialog.DialogResult = true; RefreshContacts(); StatusText.Text = "Transcript appended to personal notes."; } };
+            dialog.ShowDialog(); if (!append.IsEnabled) StatusText.Text = "Transcript ready for review.";
+        }
         catch (Exception error) { StatusText.Text = error.Message; }
     }
 

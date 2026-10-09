@@ -78,11 +78,18 @@ public sealed class LocalStore
     public List<ContactRecord> GetContacts(string eventId)
     {
         using var connection = Open(); using var command = connection.CreateCommand();
-        command.CommandText = "SELECT id, event_id, name, company, title, email, phone, website, address, raw_extraction FROM contacts WHERE event_id = $event ORDER BY created_at DESC";
+        command.CommandText = "SELECT id, event_id, name, company, title, email, phone, website, address, raw_extraction, notes, follow_up, done FROM contacts WHERE event_id = $event ORDER BY created_at DESC";
         command.Parameters.AddWithValue("$event", eventId);
         using var rows = command.ExecuteReader(); var contacts = new List<ContactRecord>();
         while (rows.Read()) contacts.Add(new ContactRecord(rows.GetString(0), rows.GetString(1), rows.GetString(2), rows.GetString(3), rows.GetString(4), rows.GetString(5), rows.GetString(6), rows.GetString(7), rows.GetString(8), rows.GetString(9), rows.IsDBNull(10) ? "" : rows.GetString(10), rows.IsDBNull(11) ? "" : rows.GetString(11), !rows.IsDBNull(12) && rows.GetInt64(12) != 0));
         return contacts;
+    }
+
+    public void AppendNotes(string contactId, string text)
+    {
+        using var connection = Open(); using var command = connection.CreateCommand();
+        command.CommandText = "UPDATE contacts SET notes = CASE WHEN notes = '' THEN $text ELSE notes || char(10) || char(10) || $text END WHERE id = $id";
+        command.Parameters.AddWithValue("$id", contactId); command.Parameters.AddWithValue("$text", text.Trim()); command.ExecuteNonQuery();
     }
 
     public void DeleteContact(string id)
