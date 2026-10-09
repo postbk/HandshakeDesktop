@@ -9,12 +9,11 @@
     <TextBlock Text="Website" /><TextBox x:Name="WebsiteBox" Margin="0,4,0,10" />
     <TextBlock Text="Address" /><TextBox x:Name="AddressBox" Margin="0,4,0,14" />
     <TextBlock Text="Personal audio note" FontWeight="SemiBold" />
-    <StackPanel Orientation="Horizontal" Margin="0,4,0,14"><Button x:Name="RecordMemoButton" Content="Record" Padding="12,7" Click="RecordMemo_Click" /><TextBlock x:Name="MemoCountdown" Text="" VerticalAlignment="Center" Margin="10,0,0,0" /><Button Content="Transcribe and organize" Padding="12,7" Margin="8,0,0,0" Click="AnalyzeMemo_Click" /></StackPanel>
+    <StackPanel Orientation="Horizontal" Margin="0,4,0,14"><Button x:Name="RecordMemoButton" Content="Record" Padding="12,7" Click="RecordMemo_Click" /><TextBlock x:Name="MemoCountdown" Text="" VerticalAlignment="Center" Margin="10,0,0,0" /><Button Content="Transcribe and organize" Padding="12,7" Margin="8,0,0,0" Click="AnalyzeMemo_Click" /><ProgressBar x:Name="MemoBusyIndicator" Width="90" Height="5" IsIndeterminate="True" Visibility="Collapsed" Margin="12,0,0,0" VerticalAlignment="Center" /></StackPanel>
     <TextBlock Text="Private notes" /><TextBox x:Name="NotesBox" Height="70" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,4,0,10" />
     <TextBlock Text="Follow-up" /><TextBox x:Name="FollowUpBox" Height="55" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,4,0,10" />
     <CheckBox x:Name="DoneBox" Content="Follow-up complete" Margin="0,0,0,14" />
-    <TextBlock Text="Company research" FontWeight="SemiBold" /><StackPanel><Button Content="Research company" Padding="12,7" HorizontalAlignment="Left" Margin="0,4,0,6" Click="Research_Click" /><TextBox x:Name="ResearchBox" Height="110" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,0,0,14" /></StackPanel>
-    <ProgressBar x:Name="BusyIndicator" Height="5" IsIndeterminate="True" Visibility="Collapsed" Margin="0,0,0,10" />
+    <TextBlock Text="Company research" FontWeight="SemiBold" /><StackPanel><StackPanel Orientation="Horizontal" Margin="0,4,0,6"><Button Content="Research company" Padding="12,7" Click="Research_Click" /><ProgressBar x:Name="ResearchBusyIndicator" Width="90" Height="5" IsIndeterminate="True" Visibility="Collapsed" Margin="12,0,0,0" VerticalAlignment="Center" /></StackPanel><TextBox x:Name="ResearchBox" Height="110" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,0,0,14" /></StackPanel>
     <TextBlock Text="Raw AI response" FontWeight="SemiBold" /><TextBox x:Name="RawBox" Height="130" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Margin="0,4,0,14" />
     <Button Content="Save contact" Padding="14,9" HorizontalAlignment="Right" Click="Save_Click" />
   </StackPanel></ScrollViewer>
