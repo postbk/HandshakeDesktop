@@ -69,9 +69,9 @@ public partial class ReviewWindow : System.Windows.Window
         var browser = new LinkedInBrowserWindow(NameBox.Text.Trim(), CompanyBox.Text.Trim()) { Owner = this };
         if (browser.ShowDialog() != true || browser.Result is null) return;
         if (!string.IsNullOrWhiteSpace(browser.Result.Url) && browser.Result.Url.Contains("linkedin.com/in/", StringComparison.OrdinalIgnoreCase)) LinkedInBox.Text = browser.Result.Url;
-        if (PasteClipboardPhoto()) return;
+        var pastedPhoto = PasteClipboardPhoto();
         var candidates = new[] { browser.Result.ImageUrl }.Concat(browser.Result.ImageUrls ?? []).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase);
-        foreach (var candidate in candidates) { try { _photoPath = await ImportBrowserPhotoAsync(candidate, NameBox.Text); UpdatePhotoPreview(); break; } catch { } }
+        if (!pastedPhoto) foreach (var candidate in candidates) { try { _photoPath = await ImportBrowserPhotoAsync(candidate, NameBox.Text); UpdatePhotoPreview(); break; } catch { } }
         if (!string.IsNullOrWhiteSpace(browser.Result.VisibleText))
         {
             try { ResearchBusyIndicator.Visibility = System.Windows.Visibility.Visible; var summary = await new OpenAiExtractor(new SecureSettings()).SummarizeProfileAsync(browser.Result.VisibleText, NameBox.Text); using var json = System.Text.Json.JsonDocument.Parse(summary); var root = json.RootElement; var lines = new List<string>(); AddProfileLine(lines, "Role", root, "role"); AddProfileLine(lines, "What they do", root, "current_work"); AddProfileList(lines, "Previous work", root, "previous_work"); AddProfileList(lines, "Education", root, "education"); AddProfileLine(lines, "Biography", root, "biography"); BiographyBox.Text = string.Join("\n", lines); FillIfBlank(TitleBox, root, "role"); } catch { } finally { ResearchBusyIndicator.Visibility = System.Windows.Visibility.Collapsed; }
