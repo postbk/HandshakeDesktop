@@ -119,7 +119,13 @@ public partial class MainWindow : System.Windows.Window
     {
         if (_store.GetEvents().Count <= 1) { StatusText.Text = "Keep at least one category."; return; }
         if (System.Windows.MessageBox.Show($"Delete category '{_event.Name}' and all of its contacts and imports?", "Confirm category deletion", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning) != System.Windows.MessageBoxResult.Yes) return;
-        var folder = _store.GetEventFolder(_event.Id); _store.DeleteEvent(_event.Id); if (Directory.Exists(folder)) Directory.Delete(folder, true); _event = _store.GetEvents().First(); EventPicker.ItemsSource = _store.GetEvents(); EventPicker.SelectedValuePath = "Id"; EventPicker.SelectedValue = _event.Id; UpdateEventHeader(); LoadEventImages(); RefreshContacts(); StatusText.Text = "Category deleted.";
+        try
+        {
+            var folder = _store.GetEventFolder(_event.Id); _selectedImages.Clear(); ImagesList.ItemsSource = null; _store.DeleteEvent(_event.Id);
+            var cleanupPending = false; try { if (Directory.Exists(folder)) Directory.Delete(folder, true); } catch (IOException) { cleanupPending = true; } catch (UnauthorizedAccessException) { cleanupPending = true; }
+            _event = _store.GetEvents().First(); EventPicker.ItemsSource = _store.GetEvents(); EventPicker.SelectedValuePath = "Id"; EventPicker.SelectedValue = _event.Id; UpdateEventHeader(); LoadEventImages(); RefreshContacts(); StatusText.Text = cleanupPending ? "Category deleted. Some locked image files will remain until Windows releases them." : "Category deleted.";
+        }
+        catch (Exception error) { StatusText.Text = $"Could not delete category: {error.Message}"; }
     }
     private void UpdateEventHeader() { EventNameText.Text = _event.Name; EventDetailsText.Text = string.Join(" · ", new[] { _event.Location, _event.Dates }.Where(x => !string.IsNullOrWhiteSpace(x))); }
     private void EventPicker_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) { if (EventPicker.SelectedItem is EventRecord selected && selected.Id != _event.Id) { _event = selected; UpdateEventHeader(); LoadEventImages(); RefreshContacts(); } }
