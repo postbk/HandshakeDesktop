@@ -43,7 +43,7 @@ public partial class MainWindow : System.Windows.Window
                 if (!string.IsNullOrWhiteSpace(company))
                 {
                     StatusText.Text = $"Researching {company}…";
-                    try { using var researchJson = System.Text.Json.JsonDocument.Parse(await extractor.ResearchAsync(company, website, selected, name)); var researchRoot = researchJson.RootElement; company = FirstValue(company, researchRoot, "company"); website = FirstValue(website, researchRoot, "website"); var address = JsonValue(item, "address"); var phone = JsonValue(item, "phone"); var email = JsonValue(item, "email"); address = FirstValue(address, researchRoot, "address"); phone = FirstValue(phone, researchRoot, "phone"); email = FirstValue(email, researchRoot, "email"); research = JsonValue(researchRoot, "summary"); var linkedIn = JsonValue(researchRoot, "linkedin_url"); var photoCandidates = new[] { JsonValue(researchRoot, "profile_image_url") }.Concat(JsonValues(researchRoot, "photo_urls")); foreach (var photoUrl in photoCandidates) { if (!Uri.TryCreate(photoUrl, UriKind.Absolute, out _)) continue; try { photoPath = await DownloadPhotoAsync(photoUrl, name); break; } catch { } } SaveContact(item, name, company, website, address, phone, email, research, photoPath, selectedImage.Path, linkedIn); saved++; continue; } catch { }
+                    try { using var researchJson = System.Text.Json.JsonDocument.Parse(await extractor.ResearchAsync(company, website, selected, name)); var researchRoot = researchJson.RootElement; company = FirstValue(company, researchRoot, "company"); website = FirstValue(website, researchRoot, "website"); var address = JsonValue(item, "address"); var phone = JsonValue(item, "phone"); var email = JsonValue(item, "email"); address = FirstValue(address, researchRoot, "address"); phone = FirstValue(phone, researchRoot, "phone"); email = FirstValue(email, researchRoot, "email"); research = JsonValue(researchRoot, "summary"); var linkedIn = await FindLinkedInProfileAsync(name, company) ?? JsonValue(researchRoot, "linkedin_url"); var linkedInImage = await FindLinkedInImageAsync(linkedIn); var photoCandidates = new[] { linkedInImage, JsonValue(researchRoot, "profile_image_url") }.Concat(JsonValues(researchRoot, "photo_urls")); foreach (var photoUrl in photoCandidates.Where(x => !string.IsNullOrWhiteSpace(x))) { if (!Uri.TryCreate(photoUrl, UriKind.Absolute, out _)) continue; try { photoPath = await DownloadPhotoAsync(photoUrl, name); break; } catch { } } SaveContact(item, name, company, website, address, phone, email, research, photoPath, selectedImage.Path, linkedIn); saved++; continue; } catch { }
                 }
                 SaveContact(item, name, company, website, JsonValue(item, "address"), JsonValue(item, "phone"), JsonValue(item, "email"), research, photoPath, selectedImage.Path, ""); saved++;
             }
@@ -62,6 +62,19 @@ public partial class MainWindow : System.Windows.Window
         return path;
     }
     private static string SanitizeFileName(string value) => string.Join("", value.Where(char.IsLetterOrDigit)).PadRight(1, 'p');
+    private static async Task<string?> FindLinkedInProfileAsync(string person, string company)
+    {
+        if (string.IsNullOrWhiteSpace(person) || string.IsNullOrWhiteSpace(company)) return null;
+        using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) }; client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 HandshakeDesktop/1.0");
+        var query = Uri.EscapeDataString($"{person} {company} LinkedIn"); var html = await client.GetStringAsync($"https://www.bing.com/search?q={query}");
+        var matches = System.Text.RegularExpressions.Regex.Matches(html, @"https?://(?:[a-z]{2,3}\.)?linkedin\.com/in/[A-Za-z0-9%_\-]+", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        return matches.Cast<System.Text.RegularExpressions.Match>().Select(x => x.Value).Select(Uri.UnescapeDataString).FirstOrDefault(x => x.Contains("linkedin.com/in/", StringComparison.OrdinalIgnoreCase));
+    }
+    private static async Task<string?> FindLinkedInImageAsync(string? profileUrl)
+    {
+        if (string.IsNullOrWhiteSpace(profileUrl)) return null;
+        try { using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) }; client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 HandshakeDesktop/1.0"); var html = await client.GetStringAsync(profileUrl); var match = System.Text.RegularExpressions.Regex.Match(html, @"<meta[^>]+property=[""']og:image[""'][^>]+content=[""']([^""']+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase); return match.Success ? System.Net.WebUtility.HtmlDecode(match.Groups[1].Value) : null; } catch { return null; }
+    }
     private static string JsonValue(System.Text.Json.JsonElement item, string property) => item.TryGetProperty(property, out var value) && value.ValueKind == System.Text.Json.JsonValueKind.String ? value.GetString() ?? "" : "";
     private static IEnumerable<string> JsonValues(System.Text.Json.JsonElement item, string property) => item.TryGetProperty(property, out var value) && value.ValueKind == System.Text.Json.JsonValueKind.Array ? value.EnumerateArray().Where(x => x.ValueKind == System.Text.Json.JsonValueKind.String).Select(x => x.GetString() ?? "").Where(x => !string.IsNullOrWhiteSpace(x)) : [];
     private static string FirstValue(string current, System.Text.Json.JsonElement root, string property) => string.IsNullOrWhiteSpace(current) ? JsonValue(root, property) : current;
