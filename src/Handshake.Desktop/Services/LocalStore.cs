@@ -45,6 +45,18 @@ public sealed class LocalStore
         insert.Parameters.AddWithValue("$id", created.Id); insert.Parameters.AddWithValue("$name", created.Name); insert.Parameters.AddWithValue("$location", created.Location); insert.Parameters.AddWithValue("$dates", created.Dates); insert.Parameters.AddWithValue("$created", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()); insert.ExecuteNonQuery(); return created;
     }
 
+    public void RenameEvent(string id, string name, string location, string dates)
+    {
+        using var connection = Open(); using var command = connection.CreateCommand(); command.CommandText = "UPDATE events SET name = $name, location = $location, dates = $dates WHERE id = $id"; command.Parameters.AddWithValue("$id", id); command.Parameters.AddWithValue("$name", name.Trim()); command.Parameters.AddWithValue("$location", location.Trim()); command.Parameters.AddWithValue("$dates", dates.Trim()); command.ExecuteNonQuery();
+    }
+
+    public void DeleteEvent(string id)
+    {
+        using var connection = Open(); using var transaction = connection.BeginTransaction();
+        foreach (var table in new[] { "contacts", "captures" }) { using var command = connection.CreateCommand(); command.Transaction = transaction; command.CommandText = $"DELETE FROM {table} WHERE event_id = $id"; command.Parameters.AddWithValue("$id", id); command.ExecuteNonQuery(); }
+        using var delete = connection.CreateCommand(); delete.Transaction = transaction; delete.CommandText = "DELETE FROM events WHERE id = $id"; delete.Parameters.AddWithValue("$id", id); delete.ExecuteNonQuery(); transaction.Commit();
+    }
+
     public List<EventRecord> GetEvents()
     {
         using var connection = Open(); using var command = connection.CreateCommand(); command.CommandText = "SELECT id, name, location, dates FROM events ORDER BY created_at DESC"; using var rows = command.ExecuteReader(); var events = new List<EventRecord>(); while (rows.Read()) events.Add(new EventRecord(rows.GetString(0), rows.GetString(1), rows.GetString(2), rows.GetString(3))); return events;

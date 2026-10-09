@@ -25,6 +25,8 @@
           <TextBlock x:Name="EventDetailsText" Text="Choose a category or create one to organize your network." Margin="0,5,0,0" />
         </StackPanel>
         <Button DockPanel.Dock="Right" Content="New category" Padding="18,9" Click="NewEvent_Click" />
+        <Button DockPanel.Dock="Right" Content="Rename" Padding="12,9" Margin="0,0,8,0" Click="RenameCategory_Click" />
+        <Button DockPanel.Dock="Right" Content="Delete" Padding="12,9" Margin="0,0,8,0" Click="DeleteCategory_Click" />
         <ComboBox x:Name="EventPicker" DockPanel.Dock="Right" Width="220" Margin="0,0,12,0" SelectionChanged="EventPicker_SelectionChanged" DisplayMemberPath="Name" />
       </DockPanel>
     </Border>
