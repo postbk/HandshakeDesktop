@@ -8,6 +8,8 @@
     <TextBlock Text="Phone" /><TextBox x:Name="PhoneBox" Margin="0,4,0,10" />
     <TextBlock Text="Website" /><TextBox x:Name="WebsiteBox" Margin="0,4,0,10" />
     <TextBlock Text="Address" /><TextBox x:Name="AddressBox" Margin="0,4,0,14" />
+    <TextBlock Text="Contact photo" FontWeight="SemiBold" />
+    <StackPanel Orientation="Horizontal" Margin="0,4,0,14"><Image x:Name="PhotoPreview" Width="90" Height="90" Stretch="UniformToFill" Margin="0,0,12,0" /><StackPanel VerticalAlignment="Center"><Button Content="Replace photo" Padding="12,7" Click="ReplacePhoto_Click" /><Button Content="Delete photo" Padding="12,7" Margin="0,7,0,0" Click="DeletePhoto_Click" /></StackPanel></StackPanel>
     <TextBlock Text="Personal audio note" FontWeight="SemiBold" />
     <StackPanel Orientation="Horizontal" Margin="0,4,0,14"><Button x:Name="RecordMemoButton" Content="Record" Padding="12,7" Click="RecordMemo_Click" /><TextBlock x:Name="MemoCountdown" Text="" VerticalAlignment="Center" Margin="10,0,0,0" /><Button Content="Transcribe and organize" Padding="12,7" Margin="8,0,0,0" Click="AnalyzeMemo_Click" /><ProgressBar x:Name="MemoBusyIndicator" Width="90" Height="5" IsIndeterminate="True" Visibility="Collapsed" Margin="12,0,0,0" VerticalAlignment="Center" /></StackPanel>
     <TextBlock Text="Private notes" /><TextBox x:Name="NotesBox" Height="70" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,4,0,10" />

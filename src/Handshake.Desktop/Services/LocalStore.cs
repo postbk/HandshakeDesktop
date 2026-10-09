@@ -118,7 +118,7 @@ public sealed class LocalStore
     {
         using var connection = Open();
         using var command = connection.CreateCommand();
-        command.CommandText = "INSERT OR REPLACE INTO contacts(id, event_id, name, company, title, email, phone, website, address, raw_extraction, notes, follow_up, done, research, created_at) VALUES ($id, $event, $name, $company, $title, $email, $phone, $website, $address, $raw, $notes, $follow, $done, $research, $created)";
+        command.CommandText = "INSERT OR REPLACE INTO contacts(id, event_id, name, company, title, email, phone, website, address, raw_extraction, notes, follow_up, done, research, photo_path, created_at) VALUES ($id, $event, $name, $company, $title, $email, $phone, $website, $address, $raw, $notes, $follow, $done, $research, $photo, $created)";
         command.Parameters.AddWithValue("$id", contact.Id); command.Parameters.AddWithValue("$event", contact.EventId);
         command.Parameters.AddWithValue("$name", contact.Name); command.Parameters.AddWithValue("$company", contact.Company);
         command.Parameters.AddWithValue("$title", contact.Title); command.Parameters.AddWithValue("$email", contact.Email);
@@ -126,16 +126,17 @@ public sealed class LocalStore
         command.Parameters.AddWithValue("$address", contact.Address); command.Parameters.AddWithValue("$raw", contact.RawExtraction);
         command.Parameters.AddWithValue("$notes", contact.Notes); command.Parameters.AddWithValue("$follow", contact.FollowUp); command.Parameters.AddWithValue("$done", contact.Done ? 1 : 0);
         command.Parameters.AddWithValue("$research", contact.Research);
+        command.Parameters.AddWithValue("$photo", contact.PhotoPath);
         command.Parameters.AddWithValue("$created", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()); command.ExecuteNonQuery();
     }
 
     public List<ContactRecord> GetContacts(string eventId)
     {
         using var connection = Open(); using var command = connection.CreateCommand();
-        command.CommandText = "SELECT id, event_id, name, company, title, email, phone, website, address, raw_extraction, notes, follow_up, done, research FROM contacts WHERE event_id = $event ORDER BY created_at DESC";
+        command.CommandText = "SELECT id, event_id, name, company, title, email, phone, website, address, raw_extraction, notes, follow_up, done, research, photo_path FROM contacts WHERE event_id = $event ORDER BY created_at DESC";
         command.Parameters.AddWithValue("$event", eventId);
         using var rows = command.ExecuteReader(); var contacts = new List<ContactRecord>();
-        while (rows.Read()) contacts.Add(new ContactRecord(rows.GetString(0), rows.GetString(1), rows.GetString(2), rows.GetString(3), rows.GetString(4), rows.GetString(5), rows.GetString(6), rows.GetString(7), rows.GetString(8), rows.GetString(9), rows.IsDBNull(10) ? "" : rows.GetString(10), rows.IsDBNull(11) ? "" : rows.GetString(11), !rows.IsDBNull(12) && rows.GetInt64(12) != 0, rows.IsDBNull(13) ? "" : rows.GetString(13)));
+        while (rows.Read()) contacts.Add(new ContactRecord(rows.GetString(0), rows.GetString(1), rows.GetString(2), rows.GetString(3), rows.GetString(4), rows.GetString(5), rows.GetString(6), rows.GetString(7), rows.GetString(8), rows.GetString(9), rows.IsDBNull(10) ? "" : rows.GetString(10), rows.IsDBNull(11) ? "" : rows.GetString(11), !rows.IsDBNull(12) && rows.GetInt64(12) != 0, rows.IsDBNull(13) ? "" : rows.GetString(13), rows.IsDBNull(14) ? "" : rows.GetString(14)));
         return contacts;
     }
 
@@ -192,10 +193,11 @@ public sealed class LocalStore
     {
         using var connection = Open();
         using var command = connection.CreateCommand();
-        command.CommandText = "CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, name TEXT NOT NULL, location TEXT NOT NULL, dates TEXT NOT NULL, created_at INTEGER NOT NULL); CREATE TABLE IF NOT EXISTS captures (id TEXT PRIMARY KEY, event_id TEXT NOT NULL, images TEXT NOT NULL, state TEXT NOT NULL, created_at INTEGER NOT NULL, FOREIGN KEY(event_id) REFERENCES events(id)); CREATE TABLE IF NOT EXISTS contacts (id TEXT PRIMARY KEY, event_id TEXT NOT NULL, name TEXT NOT NULL, company TEXT NOT NULL, title TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, website TEXT NOT NULL, address TEXT NOT NULL, raw_extraction TEXT NOT NULL, notes TEXT NOT NULL DEFAULT '', follow_up TEXT NOT NULL DEFAULT '', done INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, FOREIGN KEY(event_id) REFERENCES events(id));";
+        command.CommandText = "CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, name TEXT NOT NULL, location TEXT NOT NULL, dates TEXT NOT NULL, created_at INTEGER NOT NULL); CREATE TABLE IF NOT EXISTS captures (id TEXT PRIMARY KEY, event_id TEXT NOT NULL, images TEXT NOT NULL, state TEXT NOT NULL, created_at INTEGER NOT NULL, FOREIGN KEY(event_id) REFERENCES events(id)); CREATE TABLE IF NOT EXISTS contacts (id TEXT PRIMARY KEY, event_id TEXT NOT NULL, name TEXT NOT NULL, company TEXT NOT NULL, title TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, website TEXT NOT NULL, address TEXT NOT NULL, raw_extraction TEXT NOT NULL, notes TEXT NOT NULL DEFAULT '', follow_up TEXT NOT NULL DEFAULT '', done INTEGER NOT NULL DEFAULT 0, photo_path TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, FOREIGN KEY(event_id) REFERENCES events(id));";
         command.ExecuteNonQuery();
         foreach (var sql in new[] { "ALTER TABLE contacts ADD COLUMN notes TEXT NOT NULL DEFAULT ''", "ALTER TABLE contacts ADD COLUMN follow_up TEXT NOT NULL DEFAULT ''", "ALTER TABLE contacts ADD COLUMN done INTEGER NOT NULL DEFAULT 0" })
         { try { using var migration = connection.CreateCommand(); migration.CommandText = sql; migration.ExecuteNonQuery(); } catch (Microsoft.Data.Sqlite.SqliteException) { } }
         try { using var migration = connection.CreateCommand(); migration.CommandText = "ALTER TABLE contacts ADD COLUMN research TEXT NOT NULL DEFAULT ''"; migration.ExecuteNonQuery(); } catch (Microsoft.Data.Sqlite.SqliteException) { }
+        try { using var migration = connection.CreateCommand(); migration.CommandText = "ALTER TABLE contacts ADD COLUMN photo_path TEXT NOT NULL DEFAULT ''"; migration.ExecuteNonQuery(); } catch (Microsoft.Data.Sqlite.SqliteException) { }
     }
 }
