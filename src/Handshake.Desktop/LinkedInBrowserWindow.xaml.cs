@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.IO;
 using Microsoft.Web.WebView2.Core;
 
 namespace Handshake.Desktop;
@@ -13,7 +14,23 @@ public partial class LinkedInBrowserWindow : System.Windows.Window
     {
         InitializeComponent(); _startUrl = $"https://www.google.com/search?q={Uri.EscapeDataString($"{person} {company} LinkedIn")}"; Loaded += Browser_Loaded;
     }
-    private async void Browser_Loaded(object sender, System.Windows.RoutedEventArgs e) { try { await Browser.EnsureCoreWebView2Async(); Browser.CoreWebView2.Navigate(_startUrl); } catch (Exception error) { StatusText.Text = error.Message; } }
+    private async void Browser_Loaded(object sender, System.Windows.RoutedEventArgs e)
+    {
+        try
+        {
+            var userDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Handshake", "WebView2");
+            Directory.CreateDirectory(userDataFolder);
+            var environment = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
+            await Browser.EnsureCoreWebView2Async(environment);
+            Browser.CoreWebView2.Navigate(_startUrl);
+        }
+        catch (Exception error)
+        {
+            StatusText.Text = error is UnauthorizedAccessException
+                ? "The embedded browser could not access its user data folder. Close Handshake and try again."
+                : $"Could not start the embedded browser: {error.Message}";
+        }
+    }
     private void Back_Click(object sender, System.Windows.RoutedEventArgs e) { if (Browser.CanGoBack) Browser.GoBack(); }
     private void Forward_Click(object sender, System.Windows.RoutedEventArgs e) { if (Browser.CanGoForward) Browser.GoForward(); }
     private async void Import_Click(object sender, System.Windows.RoutedEventArgs e)
